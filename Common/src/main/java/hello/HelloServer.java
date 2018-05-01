@@ -1,4 +1,6 @@
-package java.hello;
+package hello;
+
+import hello.HelloService;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;

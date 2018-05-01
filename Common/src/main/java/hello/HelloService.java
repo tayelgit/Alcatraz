@@ -1,4 +1,4 @@
-package java.hello;
+package hello;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
