@@ -12,6 +12,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 public class Entry extends JFrame {
+    private GameServiceRemote games;
+    private GameList gamelist;
     public Entry(){
         setTitle("List of games");
         setSize(500,400);
@@ -26,17 +28,7 @@ public class Entry extends JFrame {
 
         joinGame.addActionListener( action -> {
 
-
-            try {
-                GameServiceRemote game = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
-
-
-               GameLocal gaasd = (GameLocal) game.listGames().get(0);
-
-               new GameList(game.listGames()).setVisible(true);
-            } catch (NotBoundException | MalformedURLException | RemoteException e) {
-                e.printStackTrace();
-            }
+            this.refreshGamelist();
         });
 
         JPanel jpanel = new JPanel();
@@ -45,4 +37,18 @@ public class Entry extends JFrame {
 
         contentPane.add(jpanel,BorderLayout.CENTER);
     }
+
+    public void refreshGamelist(){
+
+        try {
+
+        this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+        this.gamelist =  new GameList();
+        this.gamelist.setVisible(true);
+        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+            e.printStackTrace();
+        }
+
+    }
 }
+

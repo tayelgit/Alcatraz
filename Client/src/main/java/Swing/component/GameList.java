@@ -2,11 +2,18 @@ package Swing.component;
 
 import AlcatrazLocal.GameLocal;
 import AlcatrazRemote.Interface.GameRemote;
+import AlcatrazRemote.Interface.GameServiceRemote;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.server.ServerNotActiveException;
 import java.util.List;
+import java.util.UUID;
 import java.util.Vector;
 
 
@@ -16,7 +23,19 @@ import java.util.Vector;
 
 public class GameList extends JFrame{
 
-    public GameList(List<GameLocal> listus){
+
+    private JLabel jLabel1;
+    private JLabel jLabel2;
+
+
+    private JList jList;
+    private JPanel buttonPanel;
+    private JPanel gameInformationPanel;
+    private JPanel playerlist;
+
+    private GameServiceRemote games;
+    private GameLocal selectedGame;
+    public GameList(){
         setTitle("List of games");
         setSize(500,400);
         setLocationRelativeTo(null);
@@ -26,46 +45,127 @@ public class GameList extends JFrame{
         Container contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
 
-        JLabel jLabel = new JLabel();
-        JList jList = new JList<>(new Vector<GameLocal>(listus));
+        this.jLabel1 = new JLabel("GameName");
+        this.jLabel2 = new JLabel("Player Count");
 
-        jList.setCellRenderer(new DefaultListCellRenderer() {
+
+
+
+        this.jList = new JList<>();
+        this.buttonPanel = new JPanel();
+        this.gameInformationPanel = new JPanel();
+
+
+
+
+        this.updateGamelist();
+        this.jList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 Component renderer = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (renderer instanceof JLabel && value instanceof GameLocal) {
-                    ((JLabel) renderer).setText(((GameLocal) value).getGameID().toString());
+                    ((JLabel) renderer).setText(((GameLocal) value).getGameName());
                 }
                 return renderer;
             }
         });
-
-
-
-        JPanel jPanel = new JPanel();
 
         jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jList.setFixedCellWidth(150);
         jList.addListSelectionListener(( listSelectionEvent) ->{
             if (!listSelectionEvent.getValueIsAdjusting()) {
                 JList list = (JList) listSelectionEvent.getSource();
-                Object selectionValues = list.getSelectedValue();
-                ((JLabel)((JPanel) getContentPane().getComponent(0)).getComponent(0)).setText(selectionValues.toString());
+                this.selectedGame = (GameLocal)list.getSelectedValue();
+
+                if(selectedGame != null) {
+                    // ((JLabel)((JPanel) getContentPane().getComponent(0)).getComponent(0)).setText(selectionValues.toString());
+                    this.jLabel1.setText("Game name:\t"+selectedGame.getGameName());
+                    this.jLabel2.setText("Players:\t"+selectedGame.getTakenPlaces()+ " of " +selectedGame.getPlayerCount());
+
                 }
+            }
 
         });
 
 
-        jPanel.setLayout(new BorderLayout());
-        jPanel.add(jLabel,BorderLayout.NORTH);
-        contentPane.add(jPanel,BorderLayout.CENTER);
+
+
+        JButton createGame = new JButton("Create Game");
+        JButton joinGame = new JButton("Join Game");
+        JButton refresh = new JButton("refresh");
+
+
+        refresh.addActionListener( action -> {
+            this.updateGamelist();
+        });
+        joinGame.addActionListener( action -> {
+
+            if(this.selectedGame != null && this.selectedGame.getTakenPlaces()< this.selectedGame.getPlayerCount()) {
+                //System.out.println("Joined Game"+this.selectedGame.getGameID());
+                String playerName = JOptionPane.showInputDialog("Enter your username");
+                while (!this.selectedGame.isGamerNameAvaliable(playerName)) {
+                    playerName = JOptionPane.showInputDialog("Username is already taken for this game\n Enter other username", JOptionPane.ERROR_MESSAGE);
+                }
+                try {
+                    this.games.joindGame(playerName, this.selectedGame.getGameID());
+                    this.updateGamelist();
+                } catch (RemoteException | ServerNotActiveException e) {
+                    e.printStackTrace();
+                }
+            }else{
+                System.out.println("not joinable");
+            }
+        });
+
+        createGame.addActionListener( action -> {
+            try {
+
+                String gameName = JOptionPane.showInputDialog("Enter  Game name");
+                String playerName = JOptionPane.showInputDialog("Enter your username");
+                int numberOfPlayers =  Integer.parseInt(JOptionPane.showInputDialog("Enter the number of player( 2- 4)"));
+
+                UUID gameID = this.games.createGame(gameName, numberOfPlayers);
+                this.games.joindGame(playerName, gameID);
+                this.updateGamelist();
+
+            } catch (RemoteException | ServerNotActiveException e) {
+                e.printStackTrace();
+            }
+        });
+
+        gameInformationPanel.setLayout(new BoxLayout(gameInformationPanel,BoxLayout.PAGE_AXIS));
+
+        buttonPanel.setLayout(new FlowLayout());
+
+
+
+        gameInformationPanel.add(jLabel1);
+        gameInformationPanel.add(jLabel2);
+        gameInformationPanel.add(jLabel2);
+
+
+        buttonPanel.add(createGame);
+        buttonPanel.add(joinGame);
+        buttonPanel.add(refresh);
+
+
+        contentPane.add(gameInformationPanel);
         contentPane.add(jList, BorderLayout.WEST);
+        contentPane.add(buttonPanel, BorderLayout.SOUTH);
+    }
 
 
-        // pane.add(jPanel);
 
+    private void updateGamelist(){
 
-
+        try {
+            //TODO: update labels after joining and game
+            this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+            this.jList.setListData(new Vector<GameLocal>(this.games.listGames()));
+            //this.jList.setSelectedIndex();
+        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+            e.printStackTrace();
+        }
 
     }
 }

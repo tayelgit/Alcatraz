@@ -15,16 +15,10 @@ import java.rmi.RemoteException;
 public class main  {
     public static void main(String [ ] args) throws RemoteException, NotBoundException, MalformedURLException {
 
-     /*  HelloService helloService = (HelloService) Naming.lookup("rmi://localhost:5099/hello");
-        System.out.print(helloService.echo());
-        helloService.setString("sinethboasdflgnj");
-        System.out.print(helloService.echo());
-
-       */
 
         EventQueue.invokeLater(()->{
-           // GameList test = new GameList();
-            Entry entry = new Entry();
+           GameList entry=  new GameList();
+           // Entry entry = new Entry();
             entry.setVisible(true);
 
         });
