@@ -20,8 +20,8 @@ public interface GameServiceRemote extends Remote {
     ArrayList listGames()throws RemoteException;
     UUID createGame(String gameName, int playerCount) throws RemoteException;
 
-    void joindGame(String gamer , UUID gameId) throws RemoteException, ServerNotActiveException;
+    void joinGame(String gamer , UUID gameId) throws RemoteException, ServerNotActiveException;
     void leaveGame(String gamer , UUID gameId) throws RemoteException;
-
+    void initGameStart(UUID gameId) throws RemoteException;
 
 }

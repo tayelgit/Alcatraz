@@ -1,6 +1,8 @@
 package Swing.component;
 
 import AlcatrazLocal.GameLocal;
+import AlcatrazRemote.Implementation.GameImpl;
+import AlcatrazRemote.Implementation.GameServiceImpl;
 import AlcatrazRemote.Interface.GameRemote;
 import AlcatrazRemote.Interface.GameServiceRemote;
 
@@ -10,45 +12,48 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.util.UUID;
 
 public class Entry extends JFrame {
     private GameServiceRemote games;
-    private GameList gamelist;
-    public Entry(){
+    private UUID gameId;
+    public Entry(GameServiceRemote games, UUID gameId) throws RemoteException {
+        this.gameId = gameId;
+        this.games = games;
         setTitle("List of games");
         setSize(500,400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setVisible(true);
+        this.createGameObject();
 
-        //just swing things
         Container contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
-        JButton createGame = new JButton("Create Game");
-        JButton joinGame = new JButton("Join Game");
+        JPanel gameinfo = new JPanel();
+        JPanel buttons= new JPanel();
+        buttons.setLayout(new FlowLayout());
+        JButton button =new JButton("Start Game");
+         buttons.add(button);
+         button.addActionListener((action)->{
+             try {
+                 this.games.initGameStart(this.gameId);
+             } catch (RemoteException e) {
+                 e.printStackTrace();
+             }
+         });
 
-        joinGame.addActionListener( action -> {
-
-            this.refreshGamelist();
-        });
-
-        JPanel jpanel = new JPanel();
-        jpanel.add(createGame);
-        jpanel.add(joinGame);
-
-        contentPane.add(jpanel,BorderLayout.CENTER);
+        contentPane.add(gameinfo, BorderLayout.CENTER);
+        contentPane.add(buttons, BorderLayout.SOUTH);
     }
 
-    public void refreshGamelist(){
+     void createGameObject() throws RemoteException {
+         Registry registry = LocateRegistry.createRegistry(5090);
+         GameImpl game = new GameImpl();
+         registry.rebind("gameClient", game);
 
-        try {
+     }
 
-        this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
-        this.gamelist =  new GameList();
-        this.gamelist.setVisible(true);
-        } catch (NotBoundException | MalformedURLException | RemoteException e) {
-            e.printStackTrace();
-        }
-
-    }
 }
 

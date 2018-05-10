@@ -14,13 +14,14 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote {
     private UUID gameID;
     private ArrayList<String> gamerList ;
 
-    public GameImpl(UUID gameID) throws RemoteException {
+    public GameImpl() throws RemoteException {
         super();
         this.gameID = gameID;
         this. gamerList = new ArrayList<>();
     }
 
     public UUID getGameID(){
+        System.out.println("Callback Call");
         return this.gameID;
     }
 

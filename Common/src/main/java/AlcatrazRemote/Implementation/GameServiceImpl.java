@@ -5,6 +5,9 @@ import AlcatrazLocal.Gamer;
 import AlcatrazRemote.Interface.GameRemote;
 import AlcatrazRemote.Interface.GameServiceRemote;
 
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
@@ -14,12 +17,12 @@ import java.util.UUID;
 
 public class GameServiceImpl extends UnicastRemoteObject implements GameServiceRemote{
 
-    private ArrayList<GameRemote> gameList;
+    //private ArrayList<GameRemote> gameList;
     private ArrayList<GameLocal> gameLocalList;
     private Registry registry;
     public GameServiceImpl() throws RemoteException {
         super();
-        this.gameList = new ArrayList<>();
+      //  this.gameList = new ArrayList<>();
         this.gameLocalList = new ArrayList<>();
 
     }
@@ -39,20 +42,34 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         UUID uuid = UUID.randomUUID();
         GameLocal game = new GameLocal(uuid, gameName,  playerCount);
         gameLocalList.add(game);
-
-//        System.out.println( );
-
         return uuid;
     }
 
     @Override
-    public void joindGame(String gamerName, UUID gameId) throws RemoteException, ServerNotActiveException {
+    public void joinGame(String gamerName, UUID gameId) throws RemoteException, ServerNotActiveException {
         this.gameLocalList.stream().filter((g ->  g.getGameID().equals(gameId))).findFirst()
-                .get().addGamer(new Gamer(gamerName,getClientHost()+"5099"));
+                .get().addGamer(new Gamer(gamerName,"rmi://"+getClientHost()+":5090"));
     }
 
     @Override
     public void leaveGame(String gamer, UUID gameId) throws RemoteException {
         //this.gameLocalList.stream().filter((g ->  g.getGameID() == gameId)).findFirst().get().addGamer(gamer);
     }
+
+    @Override
+    public void initGameStart(UUID gameId) throws RemoteException {
+        ArrayList<Gamer> gamers = this.gameLocalList.stream().filter((g ->  g.getGameID().equals(gameId))).findFirst()
+                .get().getGamers();
+        gamers.forEach((gamer)->{
+            try {
+                GameRemote games   = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient") ;
+                games.getGameID();
+            } catch (NotBoundException | RemoteException | MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+        });
+    }
+
+
 }

@@ -1,18 +1,15 @@
 package Swing.component;
 
 import AlcatrazLocal.GameLocal;
-import AlcatrazRemote.Interface.GameRemote;
 import AlcatrazRemote.Interface.GameServiceRemote;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.ServerNotActiveException;
-import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -107,8 +104,10 @@ public class GameList extends JFrame{
                     playerName = JOptionPane.showInputDialog("Username is already taken for this game\n Enter other username", JOptionPane.ERROR_MESSAGE);
                 }
                 try {
-                    this.games.joindGame(playerName, this.selectedGame.getGameID());
+                    this.games.joinGame(playerName, this.selectedGame.getGameID());
+                    Entry entry = new Entry(this.games,this.selectedGame.getGameID());
                     this.updateGamelist();
+
                 } catch (RemoteException | ServerNotActiveException e) {
                     e.printStackTrace();
                 }
@@ -125,7 +124,7 @@ public class GameList extends JFrame{
                 int numberOfPlayers =  Integer.parseInt(JOptionPane.showInputDialog("Enter the number of player( 2- 4)"));
 
                 UUID gameID = this.games.createGame(gameName, numberOfPlayers);
-                this.games.joindGame(playerName, gameID);
+                this.games.joinGame(playerName, gameID);
                 this.updateGamelist();
 
             } catch (RemoteException | ServerNotActiveException e) {
