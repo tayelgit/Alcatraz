@@ -11,13 +11,10 @@ import spread.SpreadWrapper.GroupEnum;
 import spread.SpreadException;
 
 public class main {
-    public static void main(String [ ] args) throws RemoteException {
+    public static void main(String [ ] args) throws RemoteException, UnknownHostException, SpreadException {
         Registry registry = LocateRegistry.createRegistry(5099);
         GameServiceImpl game = new GameServiceImpl();
 
-        System.out.println(game.createGame().toString());
-        System.out.println(game.createGame().toString());
-        System.out.println(game.createGame().toString());
 
         registry.rebind("gamelist", game);
 
@@ -29,7 +26,7 @@ public class main {
 
 
 
-        SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost");
+      /*  SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost");
         wrapper.joinGroup(GroupEnum.SERVER_GROUP);
         wrapper.joinGroup(GroupEnum.FAULTOLERANCE_GROUP);
 
@@ -40,6 +37,6 @@ public class main {
 
         wrapper.sendCustomMessage("test1", a);
         wrapper.sendCustomMessage("test2", new String[] {"Registrierungsserver", "Fault Tolerance"});
-
+*/
     }
 }

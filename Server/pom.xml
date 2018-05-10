@@ -26,7 +26,7 @@
             <artifactId>org.spread</artifactId>
             <scope>system</scope>
             <version>4.0.0</version>
-            <systemPath>F:/BIC/BIC4/SAM/workdir/Alcatraz/Server/lib/org.spread-4.0.0.jar</systemPath>
+            <systemPath>${basedir}/lib/org.spread-4.0.0.jar</systemPath>
         </dependency>
     
 
