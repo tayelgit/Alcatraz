@@ -23,7 +23,7 @@ public class RegistryServer {
         Registry registry;
 
         System.setProperty("java.security.policy", RegistryServer.class
-                .getClassLoader().getResource(".bindings.policy").toExternalForm());
+                .getClassLoader().getResource("bindings.policy").toExternalForm());
 
         System.setSecurityManager(new SecurityManager());
 
@@ -43,5 +43,6 @@ public class RegistryServer {
         }
 
         registry = new RemoteRMIRegistry(port, bindingFile);
+        System.out.println("remote registry up and listening on port " + port);
     }
 }

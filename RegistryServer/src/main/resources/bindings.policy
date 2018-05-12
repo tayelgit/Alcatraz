@@ -4,5 +4,5 @@ grant {
   permission java.lang.RuntimePermission
     "accessClassInPackage.sun.rmi.*";
   permission java.io.FilePermission".bindings",
-    "read write,delete";
+    "read,write,delete";
 };

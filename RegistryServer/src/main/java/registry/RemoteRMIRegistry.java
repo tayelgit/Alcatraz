@@ -5,8 +5,19 @@
  */
 package registry;
 
-import java.io.*;
-import java.rmi.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.MarshalledObject;
+import java.rmi.NotBoundException;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ObjID;
@@ -40,6 +51,7 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
     }
 
     // Constructor
+    @SuppressWarnings("unchecked")
     public RemoteRMIRegistry(int port, String bindingFile) throws ClassNotFoundException, IOException {
 
         // Ablauf
@@ -134,6 +146,7 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
         persistBoundHosts();
     }
 
+    @SuppressWarnings("unchecked")
     private void persistBoundHosts() {
         try {
             ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(bindingFile));
