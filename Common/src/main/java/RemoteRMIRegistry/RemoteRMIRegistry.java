@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package registry;
+package RemoteRMIRegistry;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,20 +19,16 @@ import java.rmi.NotBoundException;
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.registry.Registry;
-import java.rmi.server.RemoteServer;
-import java.rmi.server.ObjID;
 import java.rmi.server.ServerNotActiveException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.Map;
-
-import sun.rmi.server.UnicastServerRef;
-import sun.rmi.transport.LiveRef;
 
 /**
  *
  * @author gk
  */
-public class RemoteRMIRegistry extends RemoteServer implements Registry {
+public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
 
     // Variables
     private String bindingFile;
@@ -52,7 +48,10 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
 
     // Constructor
     @SuppressWarnings("unchecked")
-    public RemoteRMIRegistry(int port, String bindingFile) throws ClassNotFoundException, IOException {
+    public RemoteRMIRegistry(String bindingFile) throws ClassNotFoundException,
+            IOException, RemoteException {
+
+        super();
 
         // Ablauf
         // todo: 1. Andere RMI Registry über Spread abfragen
@@ -62,16 +61,13 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
         try {
             this.bindingFile = bindingFile;
             ObjectInputStream input = new ObjectInputStream(new FileInputStream(bindingFile));
-            MarshalledObject inputObject = (MarshalledObject) input.readObject();
-            objectServers = (HashMap<String, BoundHosts>) inputObject.get();
+            MarshalledObject<HashMap<String, BoundHosts>> inputObject = (MarshalledObject) input.readObject();
+            this.objectServers = (HashMap) inputObject.get();
             input.close();
         } catch (FileNotFoundException e) {
             // No other registry, no persistent file -> new run of Registry server(s)
-            objectServers = new HashMap<String, BoundHosts>();
+            this.objectServers = new HashMap<>();
         }
-
-        LiveRef lr = new LiveRef(new ObjID(ObjID.REGISTRY_ID), port);
-        new UnicastServerRef(lr).exportObject(this, null);
     }
 
 
@@ -81,6 +77,7 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
             throws RemoteException, NotBoundException, AccessException {
         checkArguments(name);
         checkRemoteObjectExists(name);
+        System.out.println("Return stub for remote object " + name);
         return objectServers.get(name).stub;
     }
 
@@ -93,6 +90,7 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
 
         // todo: spread
         addObjectServer(name, new BoundHosts(hostname, obj));
+        System.out.println("Remote object " + name + " now bound from host " + hostname);
     }
 
     public void unbind(String name)
@@ -114,10 +112,10 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
 
         // todo: spread
         addObjectServer(name, new BoundHosts(hostname, obj));
+        System.out.println("Remote object " + name + " now bound from host " + hostname);
     }
 
     public String[] list() throws RemoteException, AccessException {
-        //return objectServers.keySet().toArray(new String[objectServers.size()]);
         return objectServers.keySet().toArray(new String[0]);
     }
 
@@ -136,8 +134,8 @@ public class RemoteRMIRegistry extends RemoteServer implements Registry {
         return hostname;
     }
 
-    private synchronized void addObjectServer(String name, BoundHosts hosts) {
-        objectServers.put(name, hosts);
+    private synchronized void addObjectServer(String name, BoundHosts host) {
+        objectServers.put(name, host);
         persistBoundHosts();
     }
 

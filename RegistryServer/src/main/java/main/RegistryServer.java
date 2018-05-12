@@ -1,12 +1,8 @@
 package main;
 
-import registry.RemoteRMIRegistry;
 
-import AlcatrazRemote.Implementation.GameServiceImpl;
-
-import java.net.UnknownHostException;
+import RemoteRMIRegistry.RemoteRMIRegistry;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -22,10 +18,10 @@ public class RegistryServer {
         String bindingFile = ".bindings";
         Registry registry;
 
-        System.setProperty("java.security.policy", RegistryServer.class
-                .getClassLoader().getResource("bindings.policy").toExternalForm());
+        //System.setProperty("java.security.policy", RegistryServer.class
+         //       .getClassLoader().getResource("bindings.policy").toExternalForm());
 
-        System.setSecurityManager(new SecurityManager());
+        //System.setSecurityManager(new SecurityManager());
 
         // Parse given port number and check for common Exceptions
         try {
@@ -42,7 +38,9 @@ public class RegistryServer {
             System.exit(1);
         }
 
-        registry = new RemoteRMIRegistry(port, bindingFile);
+        registry = LocateRegistry.createRegistry(port);
+        RemoteRMIRegistry reg = new RemoteRMIRegistry(bindingFile);
+        registry.rebind("reg", reg);
         System.out.println("remote registry up and listening on port " + port);
-    }
+        }
 }

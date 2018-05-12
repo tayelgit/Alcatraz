@@ -11,8 +11,6 @@
 
     <artifactId>RegistryServer</artifactId>
 
-
-
     <dependencies>
 
         <dependency>

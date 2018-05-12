@@ -3,6 +3,8 @@ package main;
 import AlcatrazRemote.Implementation.GameServiceImpl;
 import java.net.UnknownHostException;
 
+import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -11,13 +13,13 @@ import spread.SpreadWrapper.GroupEnum;
 import spread.SpreadException;
 
 public class main {
-    public static void main(String [ ] args) throws RemoteException, UnknownHostException, SpreadException {
-        Registry registry = LocateRegistry.createRegistry(5099);
+    public static void main(String [ ] args) throws RemoteException, UnknownHostException,
+            SpreadException, NotBoundException, AlreadyBoundException {
+        Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+        Registry reg = (Registry) registry.lookup("reg");
+
         GameServiceImpl game = new GameServiceImpl();
-
-
-        registry.rebind("gamelist", game);
-
+        reg.bind("gamelist", game);
 
         System.out.println(game.createGame("My Game", 2).toString());
         System.out.println(game.createGame("Some other Game", 4).toString());

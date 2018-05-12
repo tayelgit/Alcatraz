@@ -9,6 +9,8 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
 import java.util.UUID;
 import java.util.Vector;
@@ -159,12 +161,13 @@ public class GameList extends JFrame{
 
         try {
             //TODO: update labels after joining and game
-            this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+            Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+            Registry reg = (Registry) registry.lookup("reg");
+            this.games   = (GameServiceRemote) reg.lookup("gamelist");
             this.jList.setListData(new Vector<GameLocal>(this.games.listGames()));
             //this.jList.setSelectedIndex();
-        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+        } catch (NotBoundException | RemoteException e) {
             e.printStackTrace();
         }
-
     }
 }
