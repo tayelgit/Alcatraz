@@ -1,0 +1,8 @@
+grant {
+  permission java.net.SocketPermission "*:*",
+    "connect,accept,resolve,listen";
+  permission java.lang.RuntimePermission
+    "accessClassInPackage.sun.rmi.*";
+  permission java.io.FilePermission".bindings",
+    "read write,delete";
+};
