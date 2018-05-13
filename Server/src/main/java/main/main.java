@@ -13,20 +13,30 @@ import spread.SpreadWrapper.GroupEnum;
 import spread.SpreadException;
 
 public class main {
-    public static void main(String [ ] args) throws RemoteException, UnknownHostException,
-            SpreadException, NotBoundException, AlreadyBoundException {
-        Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
-        Registry reg = (Registry) registry.lookup("reg");
+    public static void main(String [ ] args) throws  RemoteException, UnknownHostException,
+            SpreadException, NotBoundException, AlreadyBoundException{
 
+        //SpreadException, NotBoundException, AlreadyBoundException {
+            //Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+            //Registry reg = (Registry) registry.lookup("reg");
+
+            //GameServiceImpl game = new GameServiceImpl();
+            //reg.bind("gamelist", game);
+
+
+        Registry registry = LocateRegistry.createRegistry(5099);
         GameServiceImpl game = new GameServiceImpl();
-        reg.bind("gamelist", game);
 
-        System.out.println(game.createGame("My Game", 2).toString());
-        System.out.println(game.createGame("Some other Game", 4).toString());
-        System.out.println(game.createGame("Whatever Game", 3).toString());
+        registry.rebind("gamelist", game);
+        System.out.println("GameService is binded to port 5099");
+
+        //GameServiceImpl game = new GameServiceImpl();
+       // reg.bind("gamelist", game);
 
 
-
+        game.createGame("My Game", 2);
+        game.createGame("Some other Game", 4);
+        game.createGame("Whatever Game", 3);
 
       /*  SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost");
         wrapper.joinGroup(GroupEnum.SERVER_GROUP);

@@ -1,10 +1,13 @@
 package Swing.component;
 
 import AlcatrazLocal.GameLocal;
+import AlcatrazRemote.Implementation.GameImpl;
 import AlcatrazRemote.Interface.GameServiceRemote;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -12,7 +15,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
-import java.util.UUID;
 import java.util.Vector;
 
 
@@ -23,8 +25,8 @@ import java.util.Vector;
 public class GameList extends JFrame{
 
 
-    private JLabel jLabel1;
-    private JLabel jLabel2;
+    private JLabel gameName;
+    private JLabel numberOfPlayers;
 
 
     private JList jList;
@@ -32,9 +34,12 @@ public class GameList extends JFrame{
     private JPanel gameInformationPanel;
     private JPanel playerlist;
 
+    private String playerName;
     private GameServiceRemote games;
     private GameLocal selectedGame;
-    public GameList(){
+    public GameList() throws RemoteException, NotBoundException, MalformedURLException {
+        this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+
         setTitle("List of games");
         setSize(500,400);
         setLocationRelativeTo(null);
@@ -44,8 +49,8 @@ public class GameList extends JFrame{
         Container contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
 
-        this.jLabel1 = new JLabel("GameName");
-        this.jLabel2 = new JLabel("Player Count");
+        this.gameName = new JLabel("GameName");
+        this.numberOfPlayers = new JLabel("Player Count");
 
 
 
@@ -55,6 +60,10 @@ public class GameList extends JFrame{
         this.gameInformationPanel = new JPanel();
 
 
+
+        JButton createGame = new JButton("Create Game");
+        JButton joinGame = new JButton("Join Game");
+        JButton refresh = new JButton("refresh");
 
 
         this.updateGamelist();
@@ -75,13 +84,7 @@ public class GameList extends JFrame{
             if (!listSelectionEvent.getValueIsAdjusting()) {
                 JList list = (JList) listSelectionEvent.getSource();
                 this.selectedGame = (GameLocal)list.getSelectedValue();
-
-                if(selectedGame != null) {
-                    // ((JLabel)((JPanel) getContentPane().getComponent(0)).getComponent(0)).setText(selectionValues.toString());
-                    this.jLabel1.setText("Game name:\t"+selectedGame.getGameName());
-                    this.jLabel2.setText("Players:\t"+selectedGame.getTakenPlaces()+ " of " +selectedGame.getPlayerCount());
-
-                }
+                updateInfoPanel();
             }
 
         });
@@ -89,30 +92,14 @@ public class GameList extends JFrame{
 
 
 
-        JButton createGame = new JButton("Create Game");
-        JButton joinGame = new JButton("Join Game");
-        JButton refresh = new JButton("refresh");
-
 
         refresh.addActionListener( action -> {
-            this.updateGamelist();
+            updateGamelist();
+            updateInfoPanel();
         });
         joinGame.addActionListener( action -> {
-
-            if(this.selectedGame != null && this.selectedGame.getTakenPlaces()< this.selectedGame.getPlayerCount()) {
-                //System.out.println("Joined Game"+this.selectedGame.getGameID());
-                String playerName = JOptionPane.showInputDialog("Enter your username");
-                while (!this.selectedGame.isGamerNameAvaliable(playerName)) {
-                    playerName = JOptionPane.showInputDialog("Username is already taken for this game\n Enter other username", JOptionPane.ERROR_MESSAGE);
-                }
-                try {
-                    this.games.joinGame(playerName, this.selectedGame.getGameID());
-                    Entry entry = new Entry(this.games,this.selectedGame.getGameID());
-                    this.updateGamelist();
-
-                } catch (RemoteException | ServerNotActiveException e) {
-                    e.printStackTrace();
-                }
+            if(this.selectedGame != null && this.selectedGame.getTakenPlaces() < this.selectedGame.getPlayerCount()) {
+                joinGame();
             }else{
                 System.out.println("not joinable");
             }
@@ -120,16 +107,15 @@ public class GameList extends JFrame{
 
         createGame.addActionListener( action -> {
             try {
-
+                int numberOfPlayers;
                 String gameName = JOptionPane.showInputDialog("Enter  Game name");
-                String playerName = JOptionPane.showInputDialog("Enter your username");
-                int numberOfPlayers =  Integer.parseInt(JOptionPane.showInputDialog("Enter the number of player( 2- 4)"));
+                do{
+                    numberOfPlayers =  Integer.parseInt(JOptionPane.showInputDialog("Enter the number of player( 2- 4)"));
+                } while(numberOfPlayers < 2 || numberOfPlayers >4);
 
-                UUID gameID = this.games.createGame(gameName, numberOfPlayers);
-                this.games.joinGame(playerName, gameID);
-                this.updateGamelist();
-
-            } catch (RemoteException | ServerNotActiveException e) {
+                this.selectedGame = this.games.createGame(gameName, numberOfPlayers);
+                joinGame();
+            } catch (RemoteException  e) {
                 e.printStackTrace();
             }
         });
@@ -140,9 +126,9 @@ public class GameList extends JFrame{
 
 
 
-        gameInformationPanel.add(jLabel1);
-        gameInformationPanel.add(jLabel2);
-        gameInformationPanel.add(jLabel2);
+        gameInformationPanel.add(gameName);
+        gameInformationPanel.add(numberOfPlayers);
+        gameInformationPanel.add(numberOfPlayers);
 
 
         buttonPanel.add(createGame);
@@ -160,14 +146,67 @@ public class GameList extends JFrame{
     private void updateGamelist(){
 
         try {
+
             //TODO: update labels after joining and game
-            Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
-            Registry reg = (Registry) registry.lookup("reg");
-            this.games   = (GameServiceRemote) reg.lookup("gamelist");
+            //Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+            //Registry reg = (Registry) registry.lookup("reg");
+           // this.games   = (GameServiceRemote) reg.lookup("gamelist");
+
+            int index = this.jList.getSelectedIndex();
             this.jList.setListData(new Vector<GameLocal>(this.games.listGames()));
+            this.jList.setSelectedIndex(index);
+        } catch ( RemoteException e) {
             //this.jList.setSelectedIndex();
         } catch (NotBoundException | RemoteException e) {
             e.printStackTrace();
+        }
+
+    }
+
+    private void joinGame(){
+
+        this.playerName = JOptionPane.showInputDialog("Enter your username");
+        while (!this.selectedGame.isGamerNameAvaliable(this.playerName)) {
+            this.playerName = JOptionPane.showInputDialog("Username is already taken for this game\n Enter other username", JOptionPane.ERROR_MESSAGE);
+        }
+        try {
+            GameImpl gameImpl = createGameObject();
+            GameLobby gameLobby = new GameLobby(this.games, gameImpl, this.playerName);
+            gameImpl.setObserver(gameLobby);
+            this.games.joinGame(this.playerName, this.selectedGame.getGameID());
+
+            gameLobby.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    onExit();
+                }
+            });
+
+            this.dispose();
+
+        } catch (RemoteException | ServerNotActiveException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private GameImpl createGameObject() throws RemoteException {
+        Registry registry = LocateRegistry.createRegistry(5092);
+        GameImpl game = new GameImpl(this.selectedGame.getGameID());
+        registry.rebind("gameClient", game);
+        return game;
+    }
+    private void onExit(){
+        try {
+            this.games.leaveGame(this.playerName,this.selectedGame.getGameID());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateInfoPanel(){
+        if(selectedGame != null) {
+            this.gameName.setText("Game name:\t"+selectedGame.getGameName());
+            this.numberOfPlayers.setText("Players:\t"+selectedGame.getTakenPlaces()+ " of " +selectedGame.getPlayerCount());
         }
     }
 }

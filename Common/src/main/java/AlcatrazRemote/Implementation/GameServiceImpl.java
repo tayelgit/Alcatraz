@@ -9,66 +9,100 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 public class GameServiceImpl extends UnicastRemoteObject implements GameServiceRemote{
 
-    //private ArrayList<GameRemote> gameList;
-    private ArrayList<GameLocal> gameLocalList;
-    private Registry registry;
+
+    private Map<UUID,GameLocal> gameLocalList;
+
     public GameServiceImpl() throws RemoteException {
         super();
-      //  this.gameList = new ArrayList<>();
-        this.gameLocalList = new ArrayList<>();
-
+        this.gameLocalList = new HashMap<>();
+        System.out.println("Game service has started");
     }
-/*
-    @Override
-    public void register(Gamer game) { }
-    @Override
-   public void unregister(Gamer game) { }
-*/
+
     @Override
     public ArrayList<GameLocal> listGames() {
-        return this.gameLocalList;
+        return new ArrayList<>(this.gameLocalList.values());
     }
 
     @Override
-    public UUID createGame(String gameName, int playerCount) throws RemoteException {
+    public ArrayList getGamers(UUID gameId) throws RemoteException {
+        return this.gameLocalList.get(gameId).getGamers();
+    }
+
+    @Override
+    public GameLocal createGame(String gameName, int playerCount) throws RemoteException {
         UUID uuid = UUID.randomUUID();
         GameLocal game = new GameLocal(uuid, gameName,  playerCount);
-        gameLocalList.add(game);
-        return uuid;
+        this.gameLocalList.put(uuid,game);
+        System.out.printf("Game: \"%s\" was created \n",game.getGameName());
+        return game;
     }
 
     @Override
-    public void joinGame(String gamerName, UUID gameId) throws RemoteException, ServerNotActiveException {
-        this.gameLocalList.stream().filter((g ->  g.getGameID().equals(gameId))).findFirst()
-                .get().addGamer(new Gamer(gamerName,"rmi://"+getClientHost()+":5090"));
+    public boolean areAllReady(UUID gameId) throws RemoteException {
+        return this.gameLocalList.get(gameId).areAllReady();
     }
 
     @Override
-    public void leaveGame(String gamer, UUID gameId) throws RemoteException {
-        //this.gameLocalList.stream().filter((g ->  g.getGameID() == gameId)).findFirst().get().addGamer(gamer);
-    }
-
-    @Override
-    public void initGameStart(UUID gameId) throws RemoteException {
-        ArrayList<Gamer> gamers = this.gameLocalList.stream().filter((g ->  g.getGameID().equals(gameId))).findFirst()
-                .get().getGamers();
+    public void notifyAll(UUID gameId) throws RemoteException {
+        ArrayList<Gamer> gamers = this.gameLocalList.get(gameId).getGamers();
         gamers.forEach((gamer)->{
             try {
-                GameRemote games   = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient") ;
-                games.getGameID();
+
+                GameRemote gameClient= (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient") ;
+                gameClient.notifyStateChanged();
             } catch (NotBoundException | RemoteException | MalformedURLException e) {
                 e.printStackTrace();
             }
 
         });
+    }
+
+    @Override
+    public void toggleReady(String gamer, UUID gameId) throws RemoteException {
+        this.gameLocalList.get(gameId).toggleReady(gamer);
+        notifyAll(gameId);
+    }
+
+
+    @Override
+    public void joinGame(String gamerName, UUID gameId) throws RemoteException, ServerNotActiveException {
+        GameLocal game = this.gameLocalList.get(gameId);
+        game.addGamer(new Gamer(gamerName,"rmi://"+getClientHost()+":5092"));
+        System.out.printf("Gamer: \"%s\"  joined Game: \"%s\" \n",gamerName,game.getGameName());
+        notifyAll(gameId);
+    }
+
+    @Override
+    public void leaveGame(String gamerName, UUID gameId) throws RemoteException {
+        GameLocal game =this.gameLocalList.get(gameId);
+        game.removeGamer(gamerName);
+        System.out.printf("Gamer: \"%s\"  left Game: \"%s\"  \n",gamerName,game.getGameName());
+        if(game.getTakenPlaces() == 0) this.gameLocalList.remove(gameId);
+        else notifyAll(gameId);
+        System.out.printf("No Players left, Game: \"%s\" was closed \n",gamerName,game.getGameName());
+    }
+
+    @Override
+    public void initGameStart(UUID gameId) throws RemoteException {
+        GameLocal game = this.gameLocalList.get(gameId);
+        ArrayList<Gamer> gamers = game.getGamers();
+        gamers.forEach((gamer)->{
+            try {
+                GameRemote games = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient") ;
+                games.startGame(gamers);
+            } catch (NotBoundException | RemoteException | MalformedURLException e) {
+                e.printStackTrace();
+            }
+        });
+        this.gameLocalList.remove(gameId);
+        System.out.printf(" Game: \"%s\" has started \n",game.getGameName());
+
     }
 
 

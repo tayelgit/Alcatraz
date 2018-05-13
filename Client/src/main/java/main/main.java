@@ -1,11 +1,9 @@
 package main;
 
-import Swing.component.Entry;
 import Swing.component.GameList;
 
 import java.awt.*;
 import java.net.MalformedURLException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
@@ -17,9 +15,14 @@ public class main  {
 
 
         EventQueue.invokeLater(()->{
-           GameList entry=  new GameList();
-           // Entry entry = new Entry();
-            entry.setVisible(true);
+            GameList gamelist;
+            try {
+                gamelist = new GameList();
+                gamelist.setVisible(true);
+
+            } catch (RemoteException | NotBoundException | MalformedURLException e) {
+                e.printStackTrace();
+            }
 
         });
 
