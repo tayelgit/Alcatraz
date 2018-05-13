@@ -34,21 +34,25 @@ public class main {
        // reg.bind("gamelist", game);
 
 
+
+        SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost", game);
         game.createGame("My Game", 2);
         game.createGame("Some other Game", 4);
         game.createGame("Whatever Game", 3);
 
-      /*  SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost");
         wrapper.joinGroup(GroupEnum.SERVER_GROUP);
-        wrapper.joinGroup(GroupEnum.FAULTOLERANCE_GROUP);
+        wrapper.joinGroup(GroupEnum.FAULTTOLERANCE_GROUP);
 
-        GroupEnum[] a = {
+        GroupEnum[] groups = {
             GroupEnum.SERVER_GROUP,
-            GroupEnum.FAULTOLERANCE_GROUP
+            GroupEnum.FAULTTOLERANCE_GROUP
         };
 
-        wrapper.sendCustomMessage("test1", a);
-        wrapper.sendCustomMessage("test2", new String[] {"Registrierungsserver", "Fault Tolerance"});
-*/
+        wrapper.sendCustomMessage("test1", groups);
+        wrapper.sendCustomMessage("test2", new String[] {
+            GroupEnum.FAULTTOLERANCE_GROUP.toString(),
+            GroupEnum.REGISTRY_GROUP.toString()
+        });
+
     }
 }

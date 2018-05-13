@@ -105,5 +105,30 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
 
     }
 
+    /**
+     * Removes specific game from local list
+     * Used by ReplicateObjectMessageListener
+     * @param gameID The UUID of the game to be removed
+     */
+    public void removeGame(UUID gameID){
+        this.gameLocalList.remove(this.gameLocalList.stream().filter((g-> g.getGameID().equals(gameID))).findFirst().get());
+    }
 
+    /**
+     * Sets the List of GameLocal-s to a specific list
+     * Used by ReplicateObjectMessageListener
+     * @param gameLocalList The new list to be used
+     */
+    public void setGameLocalList(ArrayList<GameLocal> gameLocalList) {
+        this.gameLocalList = gameLocalList;
+    }
+
+    /**
+     * Removes a specific game and adds the game with the same UUID again
+     * @param game  to be updated
+     */
+    public void updateGame(GameLocal game) {
+        removeGame(game.getGameID());
+        gameLocalList.add(game);
+    }
 }
