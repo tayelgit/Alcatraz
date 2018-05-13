@@ -157,8 +157,6 @@ public class GameList extends JFrame{
             this.jList.setSelectedIndex(index);
         } catch ( RemoteException e) {
             //this.jList.setSelectedIndex();
-        } catch (NotBoundException | RemoteException e) {
-            e.printStackTrace();
         }
 
     }

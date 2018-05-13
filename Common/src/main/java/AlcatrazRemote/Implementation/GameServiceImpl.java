@@ -111,7 +111,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
      * @param gameID The UUID of the game to be removed
      */
     public void removeGame(UUID gameID){
-        this.gameLocalList.remove(this.gameLocalList.stream().filter((g-> g.getGameID().equals(gameID))).findFirst().get());
+        this.gameLocalList.remove(gameID);
     }
 
     /**
@@ -119,7 +119,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
      * Used by ReplicateObjectMessageListener
      * @param gameLocalList The new list to be used
      */
-    public void setGameLocalList(ArrayList<GameLocal> gameLocalList) {
+    public void setGameLocalList(HashMap gameLocalList) {
         this.gameLocalList = gameLocalList;
     }
 
@@ -129,6 +129,6 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
      */
     public void updateGame(GameLocal game) {
         removeGame(game.getGameID());
-        gameLocalList.add(game);
+        gameLocalList.put(game.getGameID(),game);
     }
 }

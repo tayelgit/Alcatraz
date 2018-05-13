@@ -35,12 +35,12 @@ public class main {
 
 
 
-        SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost", game);
+      //  SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost", game);
         game.createGame("My Game", 2);
         game.createGame("Some other Game", 4);
         game.createGame("Whatever Game", 3);
 
-        wrapper.joinGroup(GroupEnum.SERVER_GROUP);
+        /*wrapper.joinGroup(GroupEnum.SERVER_GROUP);
         wrapper.joinGroup(GroupEnum.FAULTTOLERANCE_GROUP);
 
         GroupEnum[] groups = {
@@ -53,6 +53,6 @@ public class main {
             GroupEnum.FAULTTOLERANCE_GROUP.toString(),
             GroupEnum.REGISTRY_GROUP.toString()
         });
-
+*/
     }
 }

@@ -4,6 +4,7 @@ import AlcatrazLocal.GameLocal;
 import AlcatrazRemote.Implementation.GameServiceImpl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -153,7 +154,7 @@ public class ReplicateObjectMessageListener implements AdvancedMessageListener {
 
         switch (context) {
             case "CREATE_GAME":     // expected digest is ArrayList<GameLocal>
-                ArrayList<GameLocal> gameLocalList = (ArrayList<GameLocal>) messageDigest.get(1);
+                HashMap<String,GameLocal> gameLocalList = (HashMap<String,GameLocal>) messageDigest.get(1);
                 gameService.setGameLocalList(gameLocalList);
 
                 retValue = true;
