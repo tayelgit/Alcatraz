@@ -5,6 +5,8 @@
  */
 package RemoteRMIRegistry;
 
+import com.google.common.collect.HashMultimap;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -21,8 +23,7 @@ import java.rmi.AlreadyBoundException;
 import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -31,16 +32,20 @@ import java.util.Map;
 public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
 
     // Variables
+    private static final long serialVersionUID = 1L;
     private String bindingFile;
-    private Map<String, BoundHosts> objectServers;
+    private HashMultimap<String, BoundHost> objectServers;
+    private enum operation {
+        REBIND, UNBIND
+    }
 
     // Private class which saves hostnames and stubs from bound hosts
     // Used for synchronization between Registry Servers and for persistence in a local hash map
-    private static class BoundHosts implements Serializable {
+    private static class BoundHost implements Serializable {
         private String hostname;
         private Remote stub;
 
-        private BoundHosts(String host, Remote stub) {
+        private BoundHost(String host, Remote stub) {
             this.hostname = host;
             this.stub = stub;
         }
@@ -61,12 +66,12 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         try {
             this.bindingFile = bindingFile;
             ObjectInputStream input = new ObjectInputStream(new FileInputStream(bindingFile));
-            MarshalledObject<HashMap<String, BoundHosts>> inputObject = (MarshalledObject) input.readObject();
-            this.objectServers = (HashMap) inputObject.get();
+            MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject) input.readObject();
+            this.objectServers = (HashMultimap) inputObject.get();
             input.close();
         } catch (FileNotFoundException e) {
             // No other registry, no persistent file -> new run of Registry server(s)
-            this.objectServers = new HashMap<>();
+            this.objectServers = HashMultimap.create();
         }
     }
 
@@ -78,7 +83,9 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         checkArguments(name);
         checkRemoteObjectExists(name);
         System.out.println("Return stub for remote object " + name);
-        return objectServers.get(name).stub;
+        Set<BoundHost> hosts = objectServers.get(name);
+        BoundHost first = hosts.iterator().next();
+        return first.stub;
     }
 
     public void bind(String name, Remote obj)
@@ -86,11 +93,15 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         String hostname = getHostname();
 
         checkArguments(name, obj);
-        checkRemoteObjectBound(name, hostname);
+        checkObjectServerBound(name, hostname);
 
         // todo: spread
-        addObjectServer(name, new BoundHosts(hostname, obj));
+        addObjectServer(name, new BoundHost(hostname, obj));
         System.out.println("Remote object " + name + " now bound from host " + hostname);
+        Set<BoundHost> hosts = objectServers.get(name);
+        for (BoundHost host : hosts) {
+            System.out.println("Hostnames with binding to " + name + ": " + host.hostname);
+        }
     }
 
     public void unbind(String name)
@@ -98,20 +109,21 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         String hostname = getHostname();
         checkArguments(name);
         checkRemoteObjectExists(name);
-        checkObjectServerAuthorized(name, hostname, "unbind");
 
         // todo: spread
-        removeObjectServer(name);
+        removeObjectServer(name, hostname, operation.UNBIND.ordinal());
+        System.out.println(objectServers.toString());
     }
 
     public void rebind(String name, Remote obj)
             throws RemoteException, AccessException {
         String hostname = getHostname();
         checkArguments(name, obj);
-        checkObjectServerAuthorized(name, hostname, "rebind");
+        removeObjectServer(name, hostname, operation.REBIND.ordinal());
 
         // todo: spread
-        addObjectServer(name, new BoundHosts(hostname, obj));
+
+        addObjectServer(name, new BoundHost(hostname, obj));
         System.out.println("Remote object " + name + " now bound from host " + hostname);
     }
 
@@ -134,13 +146,37 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         return hostname;
     }
 
-    private synchronized void addObjectServer(String name, BoundHosts host) {
+    private synchronized void addObjectServer(String name, BoundHost host) {
         objectServers.put(name, host);
         persistBoundHosts();
     }
 
-    private synchronized void removeObjectServer(String name) {
-        objectServers.remove(name);
+    private synchronized void removeObjectServer(String name, String hostname, int method) {
+        boolean hostFound = false;
+        System.out.println("before: " + objectServers.toString());
+
+        Set<BoundHost> hosts = objectServers.get(name);
+        for (BoundHost host : hosts) {
+            System.out.println(host.toString());
+            if (host.hostname.equals(hostname)) {
+                System.out.println("Removing binding " + name + " from host " + hostname);
+                objectServers.remove(name, host);
+                hostFound = true;
+            }
+        }
+        System.out.println("after: " + objectServers.toString());
+
+        if (!hostFound) {
+            if (method == operation.REBIND.ordinal()) {
+                System.out.println("Remote object " + name +
+                        " was not bound from host " + hostname + ". Doing normal bind...");
+            }
+            else if (method == operation.UNBIND.ordinal()) {
+                System.out.println("Remote object " + name +
+                        " was not bound from host " + hostname + ". Nothing to do...");
+            }
+        }
+
         persistBoundHosts();
     }
 
@@ -170,16 +206,15 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         }
     }
 
-    private void checkRemoteObjectBound(String name, String hostname) throws AlreadyBoundException {
+    private void checkObjectServerBound(String name, String hostname) throws AlreadyBoundException {
         if (objectServers.containsKey(name)) {
-            System.out.println("Remote object " + name + " already bound!");
-            throw new AlreadyBoundException(name);
-        }
-    }
-
-    private void checkObjectServerAuthorized(String name, String hostname, String method) throws AccessException {
-        if (objectServers.containsKey(name) && !hostname.equals(objectServers.get(name).hostname)) {
-            throw new AccessException("Only bound host is authorized to " + method + "remote object " + name + "!");
+            Set<BoundHost> hosts = objectServers.get(name);
+            for (BoundHost host : hosts) {
+                if (host.hostname.equals(hostname)) {
+                    System.out.println("Remote object " + name + " already bound from host " + hostname + "!");
+                    throw new AlreadyBoundException(name);
+                }
+            }
         }
     }
 }

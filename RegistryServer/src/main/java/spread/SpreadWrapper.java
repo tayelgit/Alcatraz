@@ -5,13 +5,11 @@
  */
 package spread;
 
+import AlcatrazRemote.Implementation.GameServiceImpl;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import spread.SpreadConnection;
-import spread.SpreadException;
-import spread.SpreadGroup;
-import spread.SpreadMessage;
 
 /**
  * 
@@ -24,26 +22,32 @@ public class SpreadWrapper {
     private final SpreadConnection connection;
     
     /**
-     * contains all Groups that was joined (as Enum GroupEnum)
+     * contains all Groups that were joined (as Enum GroupEnum)
      */
-    private ArrayList<GroupEnum> groupList;
+    private ArrayList<GroupEnum> groupList = new ArrayList<GroupEnum>();
     
     /**
-     * contains all Groups that was joined (as SpreadGroup)
+     * contains all Groups that were joined (as SpreadGroup)
      */
-    private ArrayList<SpreadGroup> spreadGroupList;
-    
+    private ArrayList<SpreadGroup> spreadGroupList = new ArrayList<SpreadGroup>();
+
+    /**
+     * GameService Object used in Listeners to replicate objects
+     */
+    private final GameServiceImpl gameService;
+
     /**
      * Enum GroupEnum for our dedicated Spreadgroups (saves us the hassle to check for validity)
+     * (valid chars: ASCII >= 36 && ASCII <= 126)
      */
-    public static enum GroupEnum {
+    public enum GroupEnum {
         SERVER_GROUP("Registrierungsserver"),
-        REGISTRY_GROUP("RMI Registry"),
-        FAULTOLERANCE_GROUP("Fault Tolerance");
+        REGISTRY_GROUP("RMI_Registry"),
+        FAULTTOLERANCE_GROUP("Fault_Tolerance");
         
         private final String name;
         
-        private GroupEnum(final String name) {
+        GroupEnum(final String name) {
             this.name = name;
         }
         
@@ -56,14 +60,34 @@ public class SpreadWrapper {
     /**
      * Constructor - spread daemon MUST run before calling this
      * Creates the SpreadConnection on standard port 4803
-     * @param privateName private name of communicating user
-     * @param hostName name of host to connect to (usually localhost)
-     * @throws UnknownHostException
-     * @throws SpreadException 
+     * @param privateName   private name of communicating user
+     * @param hostName      name of host to connect to (usually localhost)
+     * @throws UnknownHostException when host can't be found or Service isn't running
+     * @throws SpreadException      when SpreadConnection can't be established
      */
-    public SpreadWrapper(String privateName, String hostName) throws UnknownHostException, SpreadException {
-        connection = new SpreadConnection();
-        connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, false);    
+    public SpreadWrapper(String privateName, String hostName, GameServiceImpl game) throws UnknownHostException, SpreadException {
+        this.gameService = game;
+        this.connection = new SpreadConnection();
+/*
+        //<editor-fold desc="Starting Spread Daemon">
+        Process spreadDaemon = null;
+        try {
+            //TODO: Change paths
+            //TODO: Doesn't seem to work .. need to start spread.exe from outside first ...
+            spreadDaemon = new ProcessBuilder(
+                    "F:\\BIC\\BIC4\\SAM\\SpreadSources\\spread-bin-4.4.0-Windows8_x64\\bin\\win32\\spread.exe",
+                    "-l y",
+                    "-n localhost",
+                    "-c F:\\BIC\\BIC4\\SAM\\SpreadSources\\used_spread\\alcatraz_spread.conf").start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //</editor-fold>
+*/
+        this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, false);
+        this.connection.add(new ReplicateObjectMessageListener(gameService));
     }
     
     /**
@@ -82,7 +106,7 @@ public class SpreadWrapper {
     /**
      * Joins specified SpreadGroup
      * @param groupName Name of group to join
-     * @throws SpreadException 
+     * @throws SpreadException  when group can't be joined
      */
     public void joinGroup(GroupEnum groupName) throws SpreadException {
         // check if already in group
@@ -102,7 +126,7 @@ public class SpreadWrapper {
     /**
      * Leave the group specified by groupName
      * @param groupName the group to leave
-     * @throws SpreadException 
+     * @throws SpreadException  when group can't be leaved
      */
     public void leaveGroup(GroupEnum groupName) throws SpreadException {
         // check if even in group
@@ -131,9 +155,10 @@ public class SpreadWrapper {
     
     /**
      * Send a custom Message containing only specified text
+     * OBSOLETE - only for testcases .. should use ReplicateObjectMessageFactory for prod
      * @param message Message to send
      * @param groups  Groups to send this message to
-     * @throws SpreadException 
+     * @throws SpreadException  when sending has failed
      */
     public void sendCustomMessage(String message, GroupEnum[] groups) throws SpreadException {
         SpreadMessage spreadMessage = new SpreadMessage();
@@ -150,14 +175,16 @@ public class SpreadWrapper {
             
             if(add) spreadMessage.addGroup(g.toString());
         }
-        
+
+        connection.multicast(spreadMessage);
     }
     
     /**
      * Send a custom Message containing only specified text
+     * OBSOLETE
      * @param message Message to send
      * @param groups  Groups to send this message to
-     * @throws SpreadException 
+     * @throws SpreadException when sending has failed
      */
     public void sendCustomMessage(String message, String[] groups) throws SpreadException {
         SpreadMessage spreadMessage = new SpreadMessage();
@@ -173,7 +200,7 @@ public class SpreadWrapper {
             
             if(add) spreadMessage.addGroup(s);
         }
-        
+
+        connection.multicast(spreadMessage);
     }
-    
 }

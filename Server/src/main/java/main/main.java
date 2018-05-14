@@ -13,34 +13,23 @@ import spread.SpreadWrapper.GroupEnum;
 import spread.SpreadException;
 
 public class main {
-    public static void main(String [ ] args) throws  RemoteException, UnknownHostException,
-            SpreadException, NotBoundException, AlreadyBoundException{
+    public static void main(String [ ] args) throws RemoteException, UnknownHostException,
+            SpreadException, NotBoundException, AlreadyBoundException {
 
-        //SpreadException, NotBoundException, AlreadyBoundException {
-            //Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
-            //Registry reg = (Registry) registry.lookup("reg");
+        Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+        Registry reg = (Registry) registry.lookup("reg");
 
-            //GameServiceImpl game = new GameServiceImpl();
-            //reg.bind("gamelist", game);
-
-
-        Registry registry = LocateRegistry.createRegistry(5099);
         GameServiceImpl game = new GameServiceImpl();
+        reg.rebind("gamelist", game);
 
-        registry.rebind("gamelist", game);
-        System.out.println("GameService is binded to port 5099");
-
-        //GameServiceImpl game = new GameServiceImpl();
-       // reg.bind("gamelist", game);
-
-
-
-      //  SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost", game);
         game.createGame("My Game", 2);
         game.createGame("Some other Game", 4);
         game.createGame("Whatever Game", 3);
 
-        /*wrapper.joinGroup(GroupEnum.SERVER_GROUP);
+
+        SpreadWrapper wrapper = new SpreadWrapper("Server1", "localhost", game);
+
+        wrapper.joinGroup(GroupEnum.SERVER_GROUP);
         wrapper.joinGroup(GroupEnum.FAULTTOLERANCE_GROUP);
 
         GroupEnum[] groups = {
@@ -53,6 +42,5 @@ public class main {
             GroupEnum.FAULTTOLERANCE_GROUP.toString(),
             GroupEnum.REGISTRY_GROUP.toString()
         });
-*/
     }
 }

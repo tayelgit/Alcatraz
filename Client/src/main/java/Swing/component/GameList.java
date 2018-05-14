@@ -38,7 +38,11 @@ public class GameList extends JFrame{
     private GameServiceRemote games;
     private GameLocal selectedGame;
     public GameList() throws RemoteException, NotBoundException, MalformedURLException {
-        this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+        //this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+
+        Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+        Registry reg = (Registry) registry.lookup("reg");
+        this.games   = (GameServiceRemote) reg.lookup("gamelist");
 
         setTitle("List of games");
         setSize(500,400);
@@ -148,7 +152,7 @@ public class GameList extends JFrame{
         try {
 
             //TODO: update labels after joining and game
-            //Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+            // Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
             //Registry reg = (Registry) registry.lookup("reg");
            // this.games   = (GameServiceRemote) reg.lookup("gamelist");
 
