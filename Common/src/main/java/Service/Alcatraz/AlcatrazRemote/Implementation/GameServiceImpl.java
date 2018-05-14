@@ -128,7 +128,11 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
      * @param gameLocalList The new list to be used
      */
     public void setGameLocalList(Map gameLocalList) {
+        this.gameLocalList.values().forEach((g)-> System.out.println(g.getTakenPlaces()));
+
         this.gameLocalList = gameLocalList;
+
+        this.gameLocalList.values().forEach((g)-> System.out.println(g.getTakenPlaces()));
     }
 
     /**
