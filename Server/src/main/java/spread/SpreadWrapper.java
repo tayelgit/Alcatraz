@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import AlcatrazRemote.Implementation.GameServiceImpl;
+import TestSpread.TestReplicateObjectMessageListener;
 
 /**
  * 
@@ -207,6 +208,20 @@ public class SpreadWrapper {
         connection.multicast(spreadMessage);
     }
 
+    /**
+     * Used by TestSpread
+     * @param message
+     * @param group
+     * @throws SpreadException
+     */
+    public void sendCustomMessage(String message, GroupEnum group) throws SpreadException {
+        SpreadMessage spreadMessage = new SpreadMessage();
+        spreadMessage.digest(message);
+
+        spreadMessage.addGroup(group.toString());
+        connection.multicast(spreadMessage);
+    }
+
     public void addReplicateGameMessageListener(GameServiceImpl game) {
         this.gameService = game;
         this.connection.add(new ReplicateGameMessageListener(this.gameService));
@@ -214,5 +229,13 @@ public class SpreadWrapper {
 
     public void addReplicateRMIMessageListener() {
         this.connection.add(new ReplicateRMIMessageListener());
+    }
+
+    public void addTestReplicateObjectMessageListener() { this.connection.add(new TestReplicateObjectMessageListener()); }
+
+    public void sendMessage(SpreadMessage message) throws SpreadException {
+        message.setReliable();
+        message.addGroup(GroupEnum.FAULTTOLERANCE_GROUP.toString());
+        connection.multicast(message);
     }
 }

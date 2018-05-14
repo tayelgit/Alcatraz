@@ -28,6 +28,7 @@ public class ReplicateObjectMessageFactory extends MessageFactory {
      */
     public SpreadMessage createMessage(String context, Serializable serializable) throws SpreadException {
         SpreadMessage message = super.createMessage();
+        if(message==null) message = new SpreadMessage();
         message.digest(context);
         message.digest(serializable);
         return message;
