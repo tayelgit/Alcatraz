@@ -8,17 +8,17 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
 
-public class ReplicateObjectMessageListener implements AdvancedMessageListener {
+public class ReplicateGameMessageListener implements AdvancedMessageListener {
     /**
      * GameSerivceImpl object to be called for replication of objects
      */
-    private final GameServiceImpl gameService;
+    private GameServiceImpl gameService;
 
     /**
      * Ctor
      * @param gameService   The GameServiceImpl object on which replication is done
      */
-    public ReplicateObjectMessageListener(GameServiceImpl gameService) {
+    public ReplicateGameMessageListener(GameServiceImpl gameService) {
         this.gameService = gameService;
     }
 
@@ -171,9 +171,6 @@ public class ReplicateObjectMessageListener implements AdvancedMessageListener {
 
                 retValue = true;
                 break;
-            /*
-             * TODO: case for RMI replication
-             */
             default:
                 break;
         }

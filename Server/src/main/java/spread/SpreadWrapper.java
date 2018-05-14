@@ -5,7 +5,6 @@
  */
 package spread;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public class SpreadWrapper {
     /**
      * GameService Object used in Listeners to replicate objects
      */
-    private final GameServiceImpl gameService;
+    private GameServiceImpl gameService;
 
     /**
      * Enum GroupEnum for our dedicated Spreadgroups (saves us the hassle to check for validity)
@@ -66,9 +65,9 @@ public class SpreadWrapper {
      * @throws UnknownHostException when host can't be found or Service isn't running
      * @throws SpreadException      when SpreadConnection can't be established
      */
-    public SpreadWrapper(String privateName, String hostName, GameServiceImpl game)
+    public SpreadWrapper(String privateName, String hostName)
             throws UnknownHostException, SpreadException {
-        this.gameService = game;
+        //this.gameService = game;
         this.connection = new SpreadConnection();
 
         //<editor-fold desc="Starting Spread Daemon">
@@ -91,7 +90,7 @@ public class SpreadWrapper {
         //</editor-fold>
 
         this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, true);
-        this.connection.add(new ReplicateObjectMessageListener(gameService));
+        //this.connection.add(new ReplicateGameMessageListener(gameService));
     }
     
     /**
@@ -206,5 +205,14 @@ public class SpreadWrapper {
         }
 
         connection.multicast(spreadMessage);
+    }
+
+    public void addReplicateGameMessageListener(GameServiceImpl game) {
+        this.gameService = game;
+        this.connection.add(new ReplicateGameMessageListener(this.gameService));
+    }
+
+    public void addReplicateRMIMessageListener() {
+        this.connection.add(new ReplicateRMIMessageListener());
     }
 }

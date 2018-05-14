@@ -8,7 +8,14 @@ public class ReplicateObjectMessageFactory extends MessageFactory {
      * @param spreadMessage the message to be set as defaultmessage
      */
     public ReplicateObjectMessageFactory(SpreadMessage spreadMessage) {
-        super(spreadMessage);
+        super(null);
+    }
+
+    /**
+     * ctor of MessageFactory - without default message
+     */
+    public ReplicateObjectMessageFactory() {
+        super(null);
     }
 
     /**

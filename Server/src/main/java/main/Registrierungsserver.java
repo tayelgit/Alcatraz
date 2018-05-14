@@ -13,29 +13,11 @@ import java.rmi.registry.Registry;
 import java.util.ArrayList;
 
 public class Registrierungsserver {
-    /**
-     * RMI Registry Addresses - known addresses
-     */
     private ArrayList<String> rmiRegistryAddresses;
-    /**
-     * Remote Registry for RMI
-     */
     private Registry registry;
-
-    /**
-     * GameService
-     */
     private GameServiceImpl game;
-
-    /**
-     *
-     */
     private SpreadWrapper spread;
 
-
-    /**
-     *
-     */
     public Registrierungsserver()
             throws RemoteException, NotBoundException {
         try {
@@ -47,6 +29,18 @@ public class Registrierungsserver {
         this.rmiRegistryAddresses.add("192.168.21.110");
 
         bindToRmiRegistry();
+
+        this.game.createGame("My Game", 2);
+        this.game.createGame("Some other Game", 4);
+        this.game.createGame("Whatever Game", 3);
+
+        try {
+            joinSpread("privateName", "localhost");
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -67,6 +61,18 @@ public class Registrierungsserver {
         this.rmiRegistryAddresses = rmiRegistryAddresses;
 
         bindToRmiRegistry();
+
+        this.game.createGame("My Game", 2);
+        this.game.createGame("Some other Game", 4);
+        this.game.createGame("Whatever Game", 3);
+
+        try {
+            joinSpread("privateName", "localhost");
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -78,7 +84,7 @@ public class Registrierungsserver {
     }
 
     /**
-     *
+     * TODO: Obsolete with Multimap?
      * @throws RemoteException
      * @throws NotBoundException
      */
@@ -113,8 +119,9 @@ public class Registrierungsserver {
      * @throws UnknownHostException
      */
     private void joinSpread(String privateName, String hostName) throws SpreadException, UnknownHostException {
-        spread = new SpreadWrapper(privateName, hostName, this.game);
-        spread.joinGroup(SpreadWrapper.GroupEnum.SERVER_GROUP);
-        spread.joinGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP);
+        this.spread = new SpreadWrapper(privateName, hostName);
+        this.spread.addReplicateGameMessageListener(this.game);
+        this.spread.joinGroup(SpreadWrapper.GroupEnum.SERVER_GROUP);
+        this.spread.joinGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP);
     }
 }
