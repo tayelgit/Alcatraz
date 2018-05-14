@@ -152,6 +152,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     }
 
     private synchronized void removeObjectServer(String name, String hostname, int method) {
+        BoundHost deleteHost = null;
         boolean hostFound = false;
         System.out.println("before: " + objectServers.toString());
 
@@ -160,9 +161,13 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             System.out.println(host.toString());
             if (host.hostname.equals(hostname)) {
                 System.out.println("Removing binding " + name + " from host " + hostname);
-                objectServers.remove(name, host);
+                deleteHost = host;
                 hostFound = true;
             }
+        }
+
+        if (hostFound) {
+            objectServers.remove(name, deleteHost);
         }
         System.out.println("after: " + objectServers.toString());
 
