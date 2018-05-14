@@ -150,11 +150,16 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
     boolean replicateObject(String context, Vector messageDigest) {
         boolean retValue = false;
 
+        System.out.println("in replicateObject");
+
         switch (context) {
             case "UPDATE_GAMELOCALLIST": // expected digest is HashMap<String, GameLocal>
+                System.out.println("in replicateObject -> UPDATE_GAMELOCALLIST");
+
                 Map<UUID,GameLocal> gameLocalList = (Map<UUID,GameLocal>) messageDigest.get(1);
                 gameService.setGameLocalList(gameLocalList);
 
+                System.out.println("in replicateObject -> AFTER replication");
                 retValue = true;
                 break;
             default:
