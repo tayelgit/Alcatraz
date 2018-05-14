@@ -44,10 +44,8 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         UUID uuid = UUID.randomUUID();
         GameLocal game = new GameLocal(uuid, gameName,  playerCount);
         this.gameLocalList.put(uuid,game);
-
-        observer.replicateGameState(this.gameLocalList);
-
         System.out.printf("Game: \"%s\" was created \n",game.getGameName());
+        observer.replicateGameState(this.gameLocalList);
         return game;
     }
 
@@ -83,6 +81,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         GameLocal game = this.gameLocalList.get(gameId);
         game.addGamer(new Gamer(gamerName,"rmi://"+getClientHost()+":5092"));
         System.out.printf("Gamer: \"%s\"  joined Game: \"%s\" \n",gamerName,game.getGameName());
+        observer.replicateGameState(this.gameLocalList);
         notifyAll(gameId);
     }
 
@@ -94,6 +93,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         if(game.getTakenPlaces() == 0) this.gameLocalList.remove(gameId);
         else notifyAll(gameId);
         System.out.printf("No Players left, Game: \"%s\" was closed \n",gamerName,game.getGameName());
+        observer.replicateGameState(this.gameLocalList);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         });
         this.gameLocalList.remove(gameId);
         System.out.printf(" Game: \"%s\" has started \n",game.getGameName());
-
+        observer.replicateGameState(this.gameLocalList);
     }
 
     /**
