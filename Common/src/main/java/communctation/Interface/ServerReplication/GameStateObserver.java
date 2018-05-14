@@ -1,6 +1,7 @@
 package communctation.Interface.ServerReplication;
 
-import AlcatrazLocal.GameLocal;
+
+import Service.Alcatraz.serviceData.GameLocal;
 
 import java.util.Map;
 import java.util.UUID;

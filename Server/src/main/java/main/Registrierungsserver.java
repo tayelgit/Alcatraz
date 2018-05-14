@@ -1,7 +1,7 @@
 package main;
 
-import AlcatrazLocal.GameLocal;
-import AlcatrazRemote.Implementation.GameServiceImpl;
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
+import Service.Alcatraz.serviceData.GameLocal;
 import communctation.Interface.ServerReplication.GameStateObserver;
 import spread.ReplicateObjectMessageFactory;
 import spread.SpreadException;
@@ -78,6 +78,7 @@ public class Registrierungsserver implements GameStateObserver {
             }
 
             this.registry = (Registry) registry.lookup("reg");
+            break;
         }
 
         this.registry.rebind("gamelist", this.game);

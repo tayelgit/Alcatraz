@@ -1,17 +1,14 @@
-package AlcatrazRemote.Interface;
+package Service.Alcatraz.AlcatrazRemote.Interface;
 
 
 
 
-import AlcatrazLocal.GameLocal;
-import AlcatrazLocal.Gamer;
-import communctation.Interface.Observer;
+import Service.Alcatraz.serviceData.GameLocal;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.ServerNotActiveException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.UUID;
 
 public interface GameServiceRemote extends Remote {

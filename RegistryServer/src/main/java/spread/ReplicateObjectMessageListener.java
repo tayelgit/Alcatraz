@@ -1,7 +1,7 @@
 package spread;
 
-import AlcatrazLocal.GameLocal;
-import AlcatrazRemote.Implementation.GameServiceImpl;
+import Service.Alcatraz.serviceData.GameLocal;
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
 
 import java.util.HashMap;
 import java.util.UUID;

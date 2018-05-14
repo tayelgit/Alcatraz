@@ -1,4 +1,4 @@
-package AlcatrazLocal;
+package Service.Alcatraz.serviceData;
 
 import java.io.Serializable;
 
@@ -7,6 +7,7 @@ public class Gamer implements Serializable {
     private String name;
     private String endpoint;
     private boolean  isReady;
+    private boolean confirmed;
 
     public Gamer(String name, String endpoint){
         this.name = name;
@@ -22,4 +23,11 @@ public class Gamer implements Serializable {
         return name;
     }
 
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
 }

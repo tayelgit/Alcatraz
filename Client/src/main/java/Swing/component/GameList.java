@@ -1,8 +1,8 @@
 package Swing.component;
 
-import AlcatrazLocal.GameLocal;
-import AlcatrazRemote.Implementation.GameImpl;
-import AlcatrazRemote.Interface.GameServiceRemote;
+import Service.Alcatraz.serviceData.GameLocal;
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameImpl;
+import Service.Alcatraz.AlcatrazRemote.Interface.GameServiceRemote;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +15,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
+import java.util.ArrayList;
 import java.util.Vector;
 
 
@@ -32,7 +33,7 @@ public class GameList extends JFrame{
     private JList jList;
     private JPanel buttonPanel;
     private JPanel gameInformationPanel;
-    private JPanel playerlist;
+
 
     private String playerName;
     private GameServiceRemote games;
@@ -40,7 +41,7 @@ public class GameList extends JFrame{
     public GameList() throws RemoteException, NotBoundException, MalformedURLException {
         //this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
 
-        Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
+        Registry registry = LocateRegistry.getRegistry("localhost",1099);
         Registry reg = (Registry) registry.lookup("reg");
         this.games   = (GameServiceRemote) reg.lookup("gamelist");
 
@@ -151,7 +152,7 @@ public class GameList extends JFrame{
 
         try {
 
-            //TODO: update labels after joining and game
+
             // Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
             //Registry reg = (Registry) registry.lookup("reg");
            // this.games   = (GameServiceRemote) reg.lookup("gamelist");
@@ -211,4 +212,22 @@ public class GameList extends JFrame{
             this.numberOfPlayers.setText("Players:\t"+selectedGame.getTakenPlaces()+ " of " +selectedGame.getPlayerCount());
         }
     }
+
+    private GameServiceRemote getGameService(){
+
+        try {
+            Registry registry = LocateRegistry.getRegistry("localhost",1099);
+            Registry reg = (Registry) registry.lookup("reg");
+            this.games   = (GameServiceRemote) reg.lookup("gamelist");
+
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private ArrayList<String> registrys = new ArrayList<String>() {{
+        add("localhost");
+        add("localhost");
+    }};
 }

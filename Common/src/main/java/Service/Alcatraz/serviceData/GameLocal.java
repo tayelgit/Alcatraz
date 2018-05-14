@@ -1,20 +1,17 @@
-package AlcatrazLocal;
+package Service.Alcatraz.serviceData;
 
 import java.io.Serializable;
-import java.rmi.server.ServerNotActiveException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static java.rmi.server.RemoteServer.getClientHost;
 
 public class GameLocal implements Serializable {
 
 
     private static final long serialVersionUID = 7602783824923127611L;
     private UUID gameID;
-    private Map<String,Gamer> gamerList ;
+    private Map<String, Gamer> gamerList ;
 
     private String gameName;
 
@@ -54,8 +51,8 @@ public class GameLocal implements Serializable {
         gamerList.remove(gamer);
     }
 
-    public ArrayList<Gamer> getGamers(){
-        return new ArrayList<>(this.gamerList.values());
+    public Map<String,Gamer> getGamers(){
+        return  this.gamerList;
     }
     public void toggleReady(String gamerName){
         Gamer gamer = this.gamerList.get(gamerName);

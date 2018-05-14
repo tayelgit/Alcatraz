@@ -1,9 +1,10 @@
-package AlcatrazRemote.Implementation;
+package Service.Alcatraz.AlcatrazRemote.Implementation;
 
-import AlcatrazLocal.GameLocal;
-import AlcatrazLocal.Gamer;
-import AlcatrazRemote.Interface.GameRemote;
-import AlcatrazRemote.Interface.GameServiceRemote;
+import Service.Alcatraz.serviceData.GameLocal;
+import Service.Alcatraz.serviceData.Gamer;
+import Service.Alcatraz.AlcatrazRemote.Interface.GameRemote;
+import Service.Alcatraz.AlcatrazRemote.Interface.GameServiceRemote;
+
 import communctation.Interface.Observable;
 import communctation.Interface.Observer;
 import communctation.Interface.ServerReplication.GameStateObservable;
@@ -35,7 +36,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
 
     @Override
     public ArrayList getGamers(UUID gameId) throws RemoteException {
-        return this.gameLocalList.get(gameId).getGamers();
+        return new ArrayList(this.gameLocalList.get(gameId).getGamers().values());
     }
 
     @Override
@@ -57,8 +58,8 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
 
     @Override
     public void notifyAll(UUID gameId) throws RemoteException {
-        ArrayList<Gamer> gamers = this.gameLocalList.get(gameId).getGamers();
-        gamers.forEach((gamer)->{
+        Map<String,Gamer> gamers = this.gameLocalList.get(gameId).getGamers();
+        gamers.values().forEach((gamer)->{
             try {
 
                 GameRemote gameClient= (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient") ;
@@ -98,11 +99,11 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
     @Override
     public void initGameStart(UUID gameId) throws RemoteException {
         GameLocal game = this.gameLocalList.get(gameId);
-        ArrayList<Gamer> gamers = game.getGamers();
-        gamers.forEach((gamer)->{
+        Map<String, Gamer> gamers = game.getGamers();
+        gamers.values().forEach((gamer)->{
             try {
                 GameRemote games = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient") ;
-                games.startGame(gamers);
+                games.startGame(gamers, gamer.getName());
             } catch (NotBoundException | RemoteException | MalformedURLException e) {
                 e.printStackTrace();
             }

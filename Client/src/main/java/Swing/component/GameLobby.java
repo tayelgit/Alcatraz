@@ -1,16 +1,14 @@
 package Swing.component;
 
 
-import AlcatrazLocal.Gamer;
-import AlcatrazRemote.Implementation.GameImpl;
-import AlcatrazRemote.Interface.GameServiceRemote;
+import Service.Alcatraz.serviceData.Gamer;
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameImpl;
+import Service.Alcatraz.AlcatrazRemote.Interface.GameServiceRemote;
 import communctation.Interface.Observer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.UUID;
 

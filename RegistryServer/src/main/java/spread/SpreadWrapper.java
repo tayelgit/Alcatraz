@@ -5,7 +5,7 @@
  */
 package spread;
 
-import AlcatrazRemote.Implementation.GameServiceImpl;
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
