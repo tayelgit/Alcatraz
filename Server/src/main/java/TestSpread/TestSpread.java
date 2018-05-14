@@ -7,11 +7,10 @@ import spread.SpreadWrapper;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class TestSpread {
     public static void main(String[] args) throws SpreadException, UnknownHostException {
-        SpreadWrapper wrapper = new SpreadWrapper("TestSpread", "localhost");
+        SpreadWrapper wrapper = new SpreadWrapper("TestSpread0", "localhost");
 
         System.out.println("##### Created Wrapper");
 
@@ -36,13 +35,13 @@ public class TestSpread {
         System.out.println("##### Created Factory");
 
         SpreadMessage m1 = factory.createMessage("TEST_STRING", "ASDF");
-        SpreadMessage m2 = factory.createMessage("TEST_ARRAY", array);
-        SpreadMessage m3 = factory.createMessage("TEST_OBJECT", array);
-
-        System.out.println("##### Created Messages");
-
         wrapper.sendMessage(m1); System.out.println("##### Sent Message 1 (String)");
+
+        SpreadMessage m2 = factory.createMessage("TEST_ARRAY", array);
         wrapper.sendMessage(m2); System.out.println("##### Sent Message 2 (String-Array)");
+
+        SpreadMessage m3 = factory.createMessage("TEST_OBJECT", array);
         wrapper.sendMessage(m3); System.out.println("##### Sent Message 3 (String-Array)");
+
     }
 }

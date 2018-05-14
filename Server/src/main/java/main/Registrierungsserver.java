@@ -1,7 +1,11 @@
 package main;
 
+import AlcatrazLocal.GameLocal;
 import AlcatrazRemote.Implementation.GameServiceImpl;
+import communctation.Interface.ServerReplication.GameStateObserver;
+import spread.ReplicateObjectMessageFactory;
 import spread.SpreadException;
+import spread.SpreadMessage;
 import spread.SpreadWrapper;
 
 import java.net.UnknownHostException;
@@ -10,8 +14,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-public class Registrierungsserver {
+public class Registrierungsserver implements GameStateObserver {
     private ArrayList<String> rmiRegistryAddresses;
     private Registry registry;
     private GameServiceImpl game;
@@ -21,11 +28,19 @@ public class Registrierungsserver {
             throws RemoteException, NotBoundException {
         try {
             this.game = new GameServiceImpl();
+            this.game.setGameStateObserver(this);
+
+            joinSpread("privateName", "localhost");
         } catch (RemoteException e) {
             e.printStackTrace();
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
         }
+
         this.rmiRegistryAddresses = new ArrayList<String>();
-        this.rmiRegistryAddresses.add("192.168.176.1");
+        this.rmiRegistryAddresses.add("127.0.0.1");
         //this.rmiRegistryAddresses.add("192.168.21.110");
 
         bindToRmiRegistry();
@@ -33,47 +48,6 @@ public class Registrierungsserver {
         this.game.createGame("My Game", 2);
         this.game.createGame("Some other Game", 4);
         this.game.createGame("Whatever Game", 3);
-
-        try {
-            joinSpread("privateName", "localhost");
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Constructor
-     * @param rmiRegistryAddresses the addresses known to connect to
-     */
-    public Registrierungsserver(ArrayList<String> rmiRegistryAddresses)
-            throws RemoteException, NotBoundException {
-        try {
-            this.game = new GameServiceImpl();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-
-        if (rmiRegistryAddresses.isEmpty())
-            this.rmiRegistryAddresses.add("192.168.176.1");
-            //rmiRegistryAddresses.add("192.168.21.110");
-
-        this.rmiRegistryAddresses = rmiRegistryAddresses;
-
-        bindToRmiRegistry();
-
-        this.game.createGame("My Game", 2);
-        this.game.createGame("Some other Game", 4);
-        this.game.createGame("Whatever Game", 3);
-
-        try {
-            joinSpread("privateName", "localhost");
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -121,5 +95,22 @@ public class Registrierungsserver {
         this.spread.addReplicateGameMessageListener(this.game);
         this.spread.joinGroup(SpreadWrapper.GroupEnum.SERVER_GROUP);
         this.spread.joinGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP);
+    }
+
+    /**
+     *
+     * @param gameLocalList
+     */
+    @Override
+    public void replicateGameState(Map<UUID, GameLocal> gameLocalList) {
+        ReplicateObjectMessageFactory factory = new ReplicateObjectMessageFactory();
+
+        SpreadMessage message;
+        try {
+            message = factory.createMessage("UPDATE_GAMELOCALLIST", (HashMap<UUID, GameLocal>)gameLocalList);
+            this.spread.sendMessage(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -3,10 +3,7 @@ package spread;
 import AlcatrazLocal.GameLocal;
 import AlcatrazRemote.Implementation.GameServiceImpl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.UUID;
-import java.util.Vector;
+import java.util.*;
 
 public class ReplicateGameMessageListener implements AdvancedMessageListener {
     /**
@@ -153,7 +150,19 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
         boolean retValue = false;
 
         switch (context) {
-            case "CREATE_GAME":     // expected digest is ArrayList<GameLocal>
+            case "UPDATE_GAMELOCALLIST": // expected digest is HashMap<String, GameLocal>
+                Map<UUID,GameLocal> gameLocalList = (Map<UUID,GameLocal>) messageDigest.get(1);
+                gameService.setGameLocalList(gameLocalList);
+
+                retValue = true;
+                break;
+            default:
+                System.out.println("Unknown Context: \"" + context + "\"");
+                break;
+
+            //<editor-fold desc="Obsolete cases ...">
+            /*    // OBSOLETE .. design decision: only full state (GameLocalList will be replicated)
+            case "CREATE_GAME":     // expected digest is HashMap<String,GameLocal>
                 HashMap<String,GameLocal> gameLocalList = (HashMap<String,GameLocal>) messageDigest.get(1);
                 gameService.setGameLocalList(gameLocalList);
 
@@ -171,8 +180,8 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
 
                 retValue = true;
                 break;
-            default:
-                break;
+            */
+            //</editor-fold>
         }
 
         return retValue;

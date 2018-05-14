@@ -59,6 +59,10 @@ public class TestReplicateObjectMessageListener implements AdvancedMessageListen
 
         String context = messageDigestVector.get(0).toString();
 
+        for(int i = 0; i < messageDigestVector.size(); i++) {
+            System.out.println(i + "-te daten: \"" + messageDigestVector.get(i) + "\"");
+        }
+
         replicateObject(context, messageDigestVector);
     }
 
@@ -129,7 +133,7 @@ public class TestReplicateObjectMessageListener implements AdvancedMessageListen
             case "TEST_ARRAY":
                 ArrayList<String> array = (ArrayList<String>)messageDigest.get(1);
 
-                for (int i = 0; i <= array.size(); i++)
+                for (int i = 0; i < array.size(); i++)
                     System.out.println(array.get(i));
 
                 retValue = true;

@@ -4,6 +4,10 @@ import AlcatrazLocal.GameLocal;
 import AlcatrazLocal.Gamer;
 import AlcatrazRemote.Interface.GameRemote;
 import AlcatrazRemote.Interface.GameServiceRemote;
+import communctation.Interface.Observable;
+import communctation.Interface.Observer;
+import communctation.Interface.ServerReplication.GameStateObservable;
+import communctation.Interface.ServerReplication.GameStateObserver;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -13,9 +17,9 @@ import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
-public class GameServiceImpl extends UnicastRemoteObject implements GameServiceRemote{
+public class GameServiceImpl extends UnicastRemoteObject implements GameServiceRemote, GameStateObservable {
 
-
+    private GameStateObserver observer;
     private Map<UUID,GameLocal> gameLocalList;
 
     public GameServiceImpl() throws RemoteException {
@@ -39,6 +43,9 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         UUID uuid = UUID.randomUUID();
         GameLocal game = new GameLocal(uuid, gameName,  playerCount);
         this.gameLocalList.put(uuid,game);
+
+        observer.replicateGameState(this.gameLocalList);
+
         System.out.printf("Game: \"%s\" was created \n",game.getGameName());
         return game;
     }
@@ -119,7 +126,7 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
      * Used by ReplicateObjectMessageListener
      * @param gameLocalList The new list to be used
      */
-    public void setGameLocalList(HashMap gameLocalList) {
+    public void setGameLocalList(Map gameLocalList) {
         this.gameLocalList = gameLocalList;
     }
 
@@ -130,5 +137,14 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
     public void updateGame(GameLocal game) {
         removeGame(game.getGameID());
         gameLocalList.put(game.getGameID(),game);
+    }
+
+    /**
+     * Sets the Observer - GameStateObserver
+     * @param observer the GameStateObserver
+     */
+    @Override
+    public void setGameStateObserver(GameStateObserver observer) {
+        this.observer = observer;
     }
 }
