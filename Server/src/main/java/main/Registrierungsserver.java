@@ -5,7 +5,6 @@ import spread.SpreadException;
 import spread.SpreadWrapper;
 
 import java.net.UnknownHostException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -25,8 +24,9 @@ public class Registrierungsserver {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-
-        this.rmiRegistryAddresses.add("192.168.21.110");
+        this.rmiRegistryAddresses = new ArrayList<String>();
+        this.rmiRegistryAddresses.add("192.168.176.1");
+        //this.rmiRegistryAddresses.add("192.168.21.110");
 
         bindToRmiRegistry();
 
@@ -56,7 +56,8 @@ public class Registrierungsserver {
         }
 
         if (rmiRegistryAddresses.isEmpty())
-            rmiRegistryAddresses.add("192.168.21.110");
+            this.rmiRegistryAddresses.add("192.168.176.1");
+            //rmiRegistryAddresses.add("192.168.21.110");
 
         this.rmiRegistryAddresses = rmiRegistryAddresses;
 
@@ -84,12 +85,14 @@ public class Registrierungsserver {
     }
 
     /**
-     * TODO: Obsolete with Multimap?
+     *
      * @throws RemoteException
      * @throws NotBoundException
      */
     public void bindToRmiRegistry() throws RemoteException, NotBoundException {
         Registry registry;
+
+        // TODO: Registry sollte aus RegistryServer kommen?!
 
         for (String address : rmiRegistryAddresses) {
             try {
@@ -97,18 +100,13 @@ public class Registrierungsserver {
             } catch (RemoteException e) {
                 e.printStackTrace();
                 System.out.println("Couldn't create reference to " + address + ". Trying next address...");
-                break;
+                continue;
             }
 
             this.registry = (Registry) registry.lookup("reg");
         }
 
-        try {
-            this.registry.bind("gamelist", this.game);
-        } catch (AlreadyBoundException e) {
-            e.printStackTrace();
-            System.out.println("Already bound - someone was faster...");
-        }
+        this.registry.rebind("gamelist", this.game);
     }
 
     /**
