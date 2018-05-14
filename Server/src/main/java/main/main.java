@@ -13,15 +13,14 @@ import spread.SpreadWrapper.GroupEnum;
 import spread.SpreadException;
 
 public class main {
-    public static void main(String [ ] args) throws  RemoteException, UnknownHostException,
+    public static void main(String [ ] args) throws RemoteException, UnknownHostException,
             SpreadException, NotBoundException, AlreadyBoundException {
 
         Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
         Registry reg = (Registry) registry.lookup("reg");
 
         GameServiceImpl game = new GameServiceImpl();
-        reg.bind("gamelist", game);
-
+        reg.rebind("gamelist", game);
 
         game.createGame("My Game", 2);
         game.createGame("Some other Game", 4);
