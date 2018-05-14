@@ -66,11 +66,13 @@ public class SpreadWrapper {
      * @throws UnknownHostException when host can't be found or Service isn't running
      * @throws SpreadException      when SpreadConnection can't be established
      */
-    public SpreadWrapper(String privateName, String hostName, GameServiceImpl game) throws UnknownHostException, SpreadException {
+    public SpreadWrapper(String privateName, String hostName, GameServiceImpl game)
+            throws UnknownHostException, SpreadException {
         this.gameService = game;
         this.connection = new SpreadConnection();
-/*
+
         //<editor-fold desc="Starting Spread Daemon">
+        /*
         Process spreadDaemon = null;
         try {
             //TODO: Change paths
@@ -85,9 +87,10 @@ public class SpreadWrapper {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        */
         //</editor-fold>
-*/
-        this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, false);
+
+        this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, true);
         this.connection.add(new ReplicateObjectMessageListener(gameService));
     }
     
