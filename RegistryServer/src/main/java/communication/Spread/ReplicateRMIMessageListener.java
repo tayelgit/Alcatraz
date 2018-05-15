@@ -2,6 +2,7 @@ package communication.Spread;
 
 import com.google.common.collect.HashMultimap;
 import registryserver.RemoteRMIRegistry;
+import registryserver.RemoteRMIRegistry.BoundHost;
 import spread.*;
 
 import java.io.Serializable;
@@ -150,9 +151,10 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
             case "UPDATE_RMIREGISTRY":     // expected digest is Serializable (b/c no dep to RegistryServer!)
                 System.out.println("in replicateObject -> UPDATE_RMIREGISTRY");
                 // TODO: Check BoundHost public access
-                //HashMultimap<String, BoundHost> objectServers = (HashMultimap<String, BoundHost>)messageDigest.get(1);
+                HashMultimap<String, BoundHost> objectServers =
+                        (HashMultimap<String, BoundHost>)messageDigest.get(1);
 
-                //this.remoteRMIRegistry.setObjectServers(objectServers);
+                this.remoteRMIRegistry.setObjectServers(objectServers);
 
                 System.out.println("in replicateObject -> AFTER replication");
                 retValue = true;

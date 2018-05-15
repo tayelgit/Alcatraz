@@ -45,11 +45,11 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     // Public class which saves hostnames and stubs from bound hosts
     // Used for synchronization between Registry Servers and for persistence in a local hash map
     // edit Carlos: is now public so it is accessible by ReplicateRMIMessageListener
-    private class BoundHost implements Serializable {
+    public class BoundHost implements Serializable {
         private String hostname;
         private Remote stub;
 
-        public BoundHost(String host, Remote stub) {
+        private BoundHost(String host, Remote stub) {
             this.hostname = host;
             this.stub = stub;
         }
