@@ -149,9 +149,10 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         switch (context) {
             case "UPDATE_RMIREGISTRY":     // expected digest is Serializable (b/c no dep to RegistryServer!)
                 System.out.println("in replicateObject -> UPDATE_RMIREGISTRY");
-                HashMultimap<String, BoundHost> objectServers = (HashMultimap<String, BoundHost>)messageDigest.get(1);
+                // TODO: Check BoundHost public access
+                //HashMultimap<String, BoundHost> objectServers = (HashMultimap<String, BoundHost>)messageDigest.get(1);
 
-                this.remoteRMIRegistry.setObjectServers(objectServers);
+                //this.remoteRMIRegistry.setObjectServers(objectServers);
 
                 System.out.println("in replicateObject -> AFTER replication");
                 retValue = true;
