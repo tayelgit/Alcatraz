@@ -1,7 +1,6 @@
-package main;
+package registryserver;
 
 
-import RemoteRMIRegistry.RemoteRMIRegistry;
 import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,11 +16,6 @@ public class RegistryServer {
         int port;
         String bindingFile = ".bindings";
         Registry registry;
-
-        //System.setProperty("java.security.policy", RegistryServer.class
-         //       .getClassLoader().getResource("bindings.policy").toExternalForm());
-
-        //System.setSecurityManager(new SecurityManager());
 
         // Parse given port number and check for common Exceptions
         try {

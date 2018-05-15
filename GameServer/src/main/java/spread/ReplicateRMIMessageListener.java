@@ -1,10 +1,5 @@
 package spread;
 
-import Service.Alcatraz.serviceData.GameLocal;
-import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
-
-import java.util.HashMap;
-import java.util.UUID;
 import java.util.Vector;
 
 public class ReplicateRMIMessageListener implements AdvancedMessageListener {
@@ -83,7 +78,7 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
      * > JOIN       someone joined the group
      * > LEAVE      someone left the group
      * > DISCONNECT someone disconnected from SpreadConnection (w/o leaving groups)
-     * > NETWORK    caused by network, not client calling join/leave/disconnect/...
+     * > NETWORK    caused by network, not gameclient calling join/leave/disconnect/...
      * @param spreadMessage the message received
      */
     @Override

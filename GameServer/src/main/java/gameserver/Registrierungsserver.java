@@ -1,12 +1,12 @@
-package main;
+package gameserver;
 
 import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
 import Service.Alcatraz.serviceData.GameLocal;
 import communctation.Interface.ServerReplication.GameStateObserver;
 import spread.ReplicateObjectMessageFactory;
+import spread.SpreadWrapper;
 import spread.SpreadException;
 import spread.SpreadMessage;
-import spread.SpreadWrapper;
 
 import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
@@ -25,29 +25,28 @@ public class Registrierungsserver implements GameStateObserver {
     private SpreadWrapper spread;
 
     public Registrierungsserver()
-            throws RemoteException, NotBoundException {
+            throws RemoteException, NotBoundException, InterruptedException {
         try {
             this.game = new GameServiceImpl();
             this.game.setGameStateObserver(this);
 
-            joinSpread("privateName", "localhost");
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        } catch (UnknownHostException e) {
+            joinSpread("rs1", "localhost");
+        } catch (RemoteException | SpreadException | UnknownHostException e) {
             e.printStackTrace();
         }
 
         this.rmiRegistryAddresses = new ArrayList<String>();
-        this.rmiRegistryAddresses.add("127.0.0.1");
-        //this.rmiRegistryAddresses.add("192.168.21.110");
+        //this.rmiRegistryAddresses.add("127.0.0.1");
+        this.rmiRegistryAddresses.add("192.168.21.110");
 
         bindToRmiRegistry();
 
-        this.game.createGame("My Game", 2);
-        this.game.createGame("Some other Game", 4);
-        this.game.createGame("Whatever Game", 3);
+        //this.game.createGame("My Game", 2);
+        //this.game.createGame("Some other Game", 4);
+        //this.game.createGame("Whatever Game", 3);
+
+        Thread.sleep(30000);
+        this.registry.unbind("gamelist");
     }
 
     /**

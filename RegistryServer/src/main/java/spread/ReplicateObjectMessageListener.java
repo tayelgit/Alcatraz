@@ -89,7 +89,7 @@ public class ReplicateObjectMessageListener implements AdvancedMessageListener {
      * > JOIN       someone joined the group
      * > LEAVE      someone left the group
      * > DISCONNECT someone disconnected from SpreadConnection (w/o leaving groups)
-     * > NETWORK    caused by network, not client calling join/leave/disconnect/...
+     * > NETWORK    caused by network, not gameclient calling join/leave/disconnect/...
      * @param spreadMessage the message received
      */
     @Override

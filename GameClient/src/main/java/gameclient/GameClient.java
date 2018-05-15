@@ -1,4 +1,4 @@
-package main;
+package gameclient;
 
 import Swing.component.GameList;
 
@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
 /**
  * Created by Oli on 26.03.2018.
  */
-public class main  {
+public class GameClient {
     public static void main(String [ ] args) throws RemoteException, NotBoundException, MalformedURLException {
 
 

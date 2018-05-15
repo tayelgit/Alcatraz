@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package RemoteRMIRegistry;
+package registryserver;
 
 import com.google.common.collect.HashMultimap;
 
@@ -70,7 +70,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             this.objectServers = (HashMultimap) inputObject.get();
             input.close();
         } catch (FileNotFoundException e) {
-            // No other registry, no persistent file -> new run of Registry server(s)
+            // No other registry, no persistent file -> new run of Registry gameserver(s)
             this.objectServers = HashMultimap.create();
         }
     }

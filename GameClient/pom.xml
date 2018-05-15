@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>RegistryServer</artifactId>
+    <artifactId>GameClient</artifactId>
 
     <build>
         <plugins>
@@ -33,10 +33,10 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>registryserver.RegistryServer</mainClass>
+                            <mainClass>gameclient.GameClient</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>RegistryServer</finalName>
+                    <finalName>GameClient</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
@@ -60,19 +60,7 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.spread-4.0.0.jar</groupId>
-            <artifactId>org.spread</artifactId>
-            <scope>system</scope>
-            <version>4.0.0</version>
-            <systemPath>${basedir}/lib/org.spread-4.0.0.jar</systemPath>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>23.0</version>
-        </dependency>
 
     </dependencies>
+
 </project>
