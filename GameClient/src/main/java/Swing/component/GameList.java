@@ -3,19 +3,18 @@ package Swing.component;
 import Service.Alcatraz.serviceData.GameLocal;
 import Service.Alcatraz.AlcatrazRemote.Implementation.GameImpl;
 import Service.Alcatraz.AlcatrazRemote.Interface.GameServiceRemote;
+import rmiUtil.RegistryService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
-import java.util.ArrayList;
 import java.util.Vector;
 
 
@@ -38,12 +37,9 @@ public class GameList extends JFrame{
     private String playerName;
     private GameServiceRemote games;
     private GameLocal selectedGame;
-    public GameList() throws RemoteException, NotBoundException, MalformedURLException {
-        //this.games   = (GameServiceRemote) Naming.lookup("rmi://localhost:5099/gamelist") ;
+    private Registry reg;
 
-        Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
-        Registry reg = (Registry) registry.lookup("reg");
-        this.games   = (GameServiceRemote) reg.lookup("gamelist");
+    public GameList() throws RemoteException, NotBoundException, MalformedURLException {
 
         setTitle("List of games");
         setSize(500,400);
@@ -56,9 +52,6 @@ public class GameList extends JFrame{
 
         this.gameName = new JLabel("GameName");
         this.numberOfPlayers = new JLabel("Player Count");
-
-
-
 
         this.jList = new JList<>();
         this.buttonPanel = new JPanel();
@@ -94,10 +87,6 @@ public class GameList extends JFrame{
 
         });
 
-
-
-
-
         refresh.addActionListener( action -> {
             updateGamelist();
             updateInfoPanel();
@@ -121,7 +110,7 @@ public class GameList extends JFrame{
                 this.selectedGame = this.games.createGame(gameName, numberOfPlayers);
                 joinGame();
             } catch (RemoteException  e) {
-                e.printStackTrace();
+                handleServerError();
             }
         });
 
@@ -151,17 +140,12 @@ public class GameList extends JFrame{
     private void updateGamelist(){
 
         try {
-
-
-            // Registry registry = LocateRegistry.getRegistry("192.168.21.110",1099);
-            //Registry reg = (Registry) registry.lookup("reg");
-           // this.games   = (GameServiceRemote) reg.lookup("gamelist");
-
+            this.games = RegistryService.getGameService();
             int index = this.jList.getSelectedIndex();
             this.jList.setListData(new Vector<GameLocal>(this.games.listGames()));
             this.jList.setSelectedIndex(index);
-        } catch ( RemoteException e) {
-            //this.jList.setSelectedIndex();
+        } catch (RemoteException e) {
+            handleServerError();
         }
 
     }
@@ -188,7 +172,7 @@ public class GameList extends JFrame{
             this.dispose();
 
         } catch (RemoteException | ServerNotActiveException e) {
-            e.printStackTrace();
+            handleServerError();
         }
     }
 
@@ -202,7 +186,7 @@ public class GameList extends JFrame{
         try {
             this.games.leaveGame(this.playerName,this.selectedGame.getGameID());
         } catch (RemoteException e) {
-            e.printStackTrace();
+            handleServerError();
         }
     }
 
@@ -213,21 +197,10 @@ public class GameList extends JFrame{
         }
     }
 
-    private GameServiceRemote getGameService(){
-
-        try {
-            Registry registry = LocateRegistry.getRegistry("localhost",1099);
-            Registry reg = (Registry) registry.lookup("reg");
-            this.games   = (GameServiceRemote) reg.lookup("gamelist");
-
-        } catch (RemoteException | NotBoundException e) {
-            e.printStackTrace();
-        }
-        return null;
+    private void handleServerError(){
+        this.games = RegistryService.getGameService();
+        JOptionPane.showMessageDialog(this, "Some Server Error happend, pls try again", "error",JOptionPane.ERROR_MESSAGE);
     }
 
-    private ArrayList<String> registrys = new ArrayList<String>() {{
-        add("localhost");
-        add("localhost");
-    }};
+
 }

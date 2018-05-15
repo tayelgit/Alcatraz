@@ -5,6 +5,7 @@ import Service.Alcatraz.serviceData.Gamer;
 import Service.Alcatraz.AlcatrazRemote.Implementation.GameImpl;
 import Service.Alcatraz.AlcatrazRemote.Interface.GameServiceRemote;
 import communctation.Interface.Observer;
+import rmiUtil.RegistryService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,14 +53,14 @@ public class GameLobby extends JFrame implements Observer {
                 this.games.leaveGame(this.playerName, this.gameId);
                 System.exit(0);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                handleServerError();
             }
         });
         ready.addActionListener((action)->{
             try {
                 this.games.toggleReady(this.playerName, this.gameId);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                handleServerError();
             }
         });
         startGame.addActionListener((action)->{
@@ -70,7 +71,7 @@ public class GameLobby extends JFrame implements Observer {
                      JOptionPane.showMessageDialog(this, "Start is only possible if all players are ready", "error",JOptionPane.ERROR_MESSAGE);
                  }
              } catch (RemoteException e) {
-                 e.printStackTrace();
+                 handleServerError();
              }
          });
         contentPane.add(gameInformationPanel, BorderLayout.CENTER);
@@ -101,5 +102,10 @@ public class GameLobby extends JFrame implements Observer {
             e.printStackTrace();
         }
     }
-}
 
+
+    private void handleServerError(){
+        this.games = RegistryService.getGameService();
+        JOptionPane.showMessageDialog(this, "Some Server Error happend, pls try again", "error",JOptionPane.ERROR_MESSAGE);
+    }
+}
