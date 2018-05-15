@@ -91,11 +91,8 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     public void bind(String name, Remote obj)
             throws RemoteException, AlreadyBoundException, AccessException {
         String hostname = getHostname();
-
         checkArguments(name, obj);
         checkObjectServerBound(name, hostname);
-
-        // todo: spread
         addObjectServer(name, new BoundHost(hostname, obj));
         System.out.println("Remote object " + name + " now bound from host " + hostname);
         Set<BoundHost> hosts = objectServers.get(name);
@@ -109,8 +106,6 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         String hostname = getHostname();
         checkArguments(name);
         checkRemoteObjectExists(name);
-
-        // todo: spread
         removeObjectServer(name, hostname, operation.UNBIND.ordinal());
         System.out.println(objectServers.toString());
     }
@@ -120,9 +115,6 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         String hostname = getHostname();
         checkArguments(name, obj);
         removeObjectServer(name, hostname, operation.REBIND.ordinal());
-
-        // todo: spread
-
         addObjectServer(name, new BoundHost(hostname, obj));
         System.out.println("Remote object " + name + " now bound from host " + hostname);
     }
@@ -148,6 +140,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
 
     private synchronized void addObjectServer(String name, BoundHost host) {
         objectServers.put(name, host);
+        // TODO: spread message
         persistBoundHosts();
     }
 
@@ -182,6 +175,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             }
         }
 
+        // TODO: spread message
         persistBoundHosts();
     }
 
