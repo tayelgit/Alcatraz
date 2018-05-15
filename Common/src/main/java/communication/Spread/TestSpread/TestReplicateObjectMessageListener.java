@@ -1,4 +1,4 @@
-package TestSpread;
+package communication.Spread.TestSpread;
 
 import spread.*;
 

@@ -3,13 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package spread;
-
-import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
+package communication.Spread;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
+import communication.Spread.TestSpread.TestReplicateObjectMessageListener;
+import communication.Spread.ReplicateRMIMessageListener;
+import spread.SpreadConnection;
+import spread.SpreadException;
+import spread.SpreadGroup;
+import spread.SpreadMessage;
+
 
 /**
  * 
@@ -34,7 +41,7 @@ public class SpreadWrapper {
     /**
      * GameService Object used in Listeners to replicate objects
      */
-    private final GameServiceImpl gameService;
+    private GameServiceImpl gameService;
 
     /**
      * Enum GroupEnum for our dedicated Spreadgroups (saves us the hassle to check for validity)
@@ -65,11 +72,13 @@ public class SpreadWrapper {
      * @throws UnknownHostException when host can't be found or Service isn't running
      * @throws SpreadException      when SpreadConnection can't be established
      */
-    public SpreadWrapper(String privateName, String hostName, GameServiceImpl game) throws UnknownHostException, SpreadException {
-        this.gameService = game;
+    public SpreadWrapper(String privateName, String hostName)
+            throws UnknownHostException, SpreadException {
+        //this.gameService = game;
         this.connection = new SpreadConnection();
-/*
+
         //<editor-fold desc="Starting Spread Daemon">
+        /*
         Process spreadDaemon = null;
         try {
             //TODO: Change paths
@@ -84,10 +93,11 @@ public class SpreadWrapper {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        */
         //</editor-fold>
-*/
-        this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, false);
-        this.connection.add(new ReplicateObjectMessageListener(gameService));
+
+        this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, true);
+        //this.connection.add(new ReplicateGameMessageListener(gameService));
     }
     
     /**
@@ -202,5 +212,36 @@ public class SpreadWrapper {
         }
 
         connection.multicast(spreadMessage);
+    }
+
+    /**
+     * Used by TestSpread
+     * @param message
+     * @param group
+     * @throws SpreadException
+     */
+    public void sendCustomMessage(String message, GroupEnum group) throws SpreadException {
+        SpreadMessage spreadMessage = new SpreadMessage();
+        spreadMessage.digest(message);
+
+        spreadMessage.addGroup(group.toString());
+        connection.multicast(spreadMessage);
+    }
+
+    public void addReplicateGameMessageListener(GameServiceImpl game) {
+        this.gameService = game;
+        this.connection.add(new ReplicateGameMessageListener(this.gameService));
+    }
+
+    public void addReplicateRMIMessageListener() {
+        this.connection.add(new ReplicateRMIMessageListener());
+    }
+
+    public void addTestReplicateObjectMessageListener() { this.connection.add(new TestReplicateObjectMessageListener()); }
+
+    public void sendMessage(SpreadMessage message) throws SpreadException {
+        message.setReliable();
+        message.addGroup(GroupEnum.FAULTTOLERANCE_GROUP.toString());
+        connection.multicast(message);
     }
 }

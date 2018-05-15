@@ -3,8 +3,8 @@ package gameserver;
 import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
 import Service.Alcatraz.serviceData.GameLocal;
 import communctation.Interface.ServerReplication.GameStateObserver;
-import spread.ReplicateObjectMessageFactory;
-import spread.SpreadWrapper;
+import communication.Spread.ReplicateObjectMessageFactory;
+import communication.Spread.SpreadWrapper;
 import spread.SpreadException;
 import spread.SpreadMessage;
 

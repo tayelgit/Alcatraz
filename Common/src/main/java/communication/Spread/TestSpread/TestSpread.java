@@ -1,9 +1,9 @@
-package TestSpread;
+package communication.Spread.TestSpread;
 
-import spread.ReplicateObjectMessageFactory;
+import communication.Spread.ReplicateObjectMessageFactory;
 import spread.SpreadException;
 import spread.SpreadMessage;
-import spread.SpreadWrapper;
+import communication.Spread.SpreadWrapper;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
