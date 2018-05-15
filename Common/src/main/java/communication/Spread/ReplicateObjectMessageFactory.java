@@ -1,4 +1,8 @@
-package spread;
+package communication.Spread;
+
+import spread.MessageFactory;
+import spread.SpreadException;
+import spread.SpreadMessage;
 
 import java.io.Serializable;
 
@@ -8,7 +12,14 @@ public class ReplicateObjectMessageFactory extends MessageFactory {
      * @param spreadMessage the message to be set as defaultmessage
      */
     public ReplicateObjectMessageFactory(SpreadMessage spreadMessage) {
-        super(spreadMessage);
+        super(null);
+    }
+
+    /**
+     * ctor of MessageFactory - without default message
+     */
+    public ReplicateObjectMessageFactory() {
+        super(null);
     }
 
     /**
@@ -21,7 +32,8 @@ public class ReplicateObjectMessageFactory extends MessageFactory {
      */
     public SpreadMessage createMessage(String context, Serializable serializable) throws SpreadException {
         SpreadMessage message = super.createMessage();
-        message.digest(context);
+        if(message==null) message = new SpreadMessage();
+        message.digest((Serializable) context);
         message.digest(serializable);
         return message;
     }

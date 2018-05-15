@@ -1,12 +1,25 @@
-package spread;
+package communication.Spread;
 
-import java.util.Vector;
 
-public class ReplicateRMIMessageListener implements AdvancedMessageListener {
+import Service.Alcatraz.serviceData.GameLocal;
+import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
+import spread.*;
+
+import java.util.*;
+
+public class ReplicateGameMessageListener implements AdvancedMessageListener {
+    /**
+     * GameSerivceImpl object to be called for replication of objects
+     */
+    private GameServiceImpl gameService;
+
     /**
      * Ctor
+     * @param gameService   The GameServiceImpl object on which replication is done
      */
-    public ReplicateRMIMessageListener() { }
+    public ReplicateGameMessageListener(GameServiceImpl gameService) {
+        this.gameService = gameService;
+    }
 
     /**
      * Reacts to regular messages
@@ -64,10 +77,8 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         if(messageDigestVector == null)
             return;
 
-        // context - what to do with this message
         String context = messageDigestVector.get(0).toString();
 
-        // replicate Object
         replicateObject(context, messageDigestVector);
     }
 
@@ -140,22 +151,44 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
     boolean replicateObject(String context, Vector messageDigest) {
         boolean retValue = false;
 
+        System.out.println("in replicateObject");
+
         switch (context) {
-            // TODO: expected context and objects to replicate
-            case "CREATE_GAME":     // expected digest is ArrayList<GameLocal>
+            case "UPDATE_GAMELOCALLIST": // expected digest is HashMap<String, GameLocal>
+                System.out.println("in replicateObject -> UPDATE_GAMELOCALLIST");
+
+                Map<UUID,GameLocal> gameLocalList = (Map<UUID,GameLocal>) messageDigest.get(1);
+                gameService.setGameLocalList(gameLocalList);
+
+                System.out.println("in replicateObject -> AFTER replication");
+                retValue = true;
+                break;
+            default:
+                System.out.println("Unknown Context: \"" + context + "\"");
+                break;
+
+            //<editor-fold desc="Obsolete cases ...">
+            /*    // OBSOLETE .. design decision: only full state (GameLocalList will be replicated)
+            case "CREATE_GAME":     // expected digest is HashMap<String,GameLocal>
+                HashMap<String,GameLocal> gameLocalList = (HashMap<String,GameLocal>) messageDigest.get(1);
+                gameService.setGameLocalList(gameLocalList);
 
                 retValue = true;
                 break;
             case "UPDATE_GAME":     // expected digest is GameLocal-Object
+                GameLocal game = (GameLocal) messageDigest.get(1);
+                gameService.updateGame(game);
 
                 retValue = true;
                 break;
             case "DESTROY_GAME":    // expected digest is UID-Object
+                UUID uuid = (UUID) messageDigest.get(1);
+                gameService.removeGame(uuid);
 
                 retValue = true;
                 break;
-            default:
-                break;
+            */
+            //</editor-fold>
         }
 
         return retValue;

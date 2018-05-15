@@ -1,25 +1,14 @@
-package spread;
+package communication.Spread;
 
-import Service.Alcatraz.serviceData.GameLocal;
-import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
+import spread.*;
 
-import java.util.HashMap;
-import java.util.UUID;
 import java.util.Vector;
 
-public class ReplicateObjectMessageListener implements AdvancedMessageListener {
-    /**
-     * GameSerivceImpl object to be called for replication of objects
-     */
-    private final GameServiceImpl gameService;
-
+public class ReplicateRMIMessageListener implements AdvancedMessageListener {
     /**
      * Ctor
-     * @param gameService   The GameServiceImpl object on which replication is done
      */
-    public ReplicateObjectMessageListener(GameServiceImpl gameService) {
-        this.gameService = gameService;
-    }
+    public ReplicateRMIMessageListener() { }
 
     /**
      * Reacts to regular messages
@@ -77,8 +66,10 @@ public class ReplicateObjectMessageListener implements AdvancedMessageListener {
         if(messageDigestVector == null)
             return;
 
+        // context - what to do with this message
         String context = messageDigestVector.get(0).toString();
 
+        // replicate Object
         replicateObject(context, messageDigestVector);
     }
 
@@ -152,27 +143,19 @@ public class ReplicateObjectMessageListener implements AdvancedMessageListener {
         boolean retValue = false;
 
         switch (context) {
+            // TODO: expected context and objects to replicate
             case "CREATE_GAME":     // expected digest is ArrayList<GameLocal>
-                HashMap<String,GameLocal> gameLocalList = (HashMap<String,GameLocal>) messageDigest.get(1);
-                gameService.setGameLocalList(gameLocalList);
 
                 retValue = true;
                 break;
             case "UPDATE_GAME":     // expected digest is GameLocal-Object
-                GameLocal game = (GameLocal) messageDigest.get(1);
-                gameService.updateGame(game);
 
                 retValue = true;
                 break;
             case "DESTROY_GAME":    // expected digest is UID-Object
-                UUID uuid = (UUID) messageDigest.get(1);
-                gameService.removeGame(uuid);
 
                 retValue = true;
                 break;
-            /*
-             * TODO: case for RMI replication
-             */
             default:
                 break;
         }
