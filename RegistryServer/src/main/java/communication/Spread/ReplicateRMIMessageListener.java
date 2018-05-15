@@ -1,15 +1,19 @@
 package communication.Spread;
 
+import com.google.common.collect.HashMultimap;
+import registryserver.RemoteRMIRegistry;
 import spread.*;
 
+import java.io.Serializable;
 import java.util.Vector;
 
 public class ReplicateRMIMessageListener implements AdvancedMessageListener {
+    private RemoteRMIRegistry remoteRMIRegistry;
+
     /**
      * Ctor
      */
-    public ReplicateRMIMessageListener() { }
-
+    public ReplicateRMIMessageListener(RemoteRMIRegistry remoteRMIRegistry) { this.remoteRMIRegistry = remoteRMIRegistry; }
     /**
      * Reacts to regular messages
      * Regular messages are all messages that aren't membership messages
@@ -143,20 +147,17 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         boolean retValue = false;
 
         switch (context) {
-            // TODO: expected context and objects to replicate
-            case "CREATE_GAME":     // expected digest is ArrayList<GameLocal>
+            case "UPDATE_RMIREGISTRY":     // expected digest is Serializable (b/c no dep to RegistryServer!)
+                System.out.println("in replicateObject -> UPDATE_RMIREGISTRY");
+                HashMultimap<String, BoundHost> objectServers = (HashMultimap<String, BoundHost>)messageDigest.get(1);
 
-                retValue = true;
-                break;
-            case "UPDATE_GAME":     // expected digest is GameLocal-Object
+                this.remoteRMIRegistry.setObjectServers(objectServers);
 
-                retValue = true;
-                break;
-            case "DESTROY_GAME":    // expected digest is UID-Object
-
+                System.out.println("in replicateObject -> AFTER replication");
                 retValue = true;
                 break;
             default:
+                System.out.println("Unknown Context: \"" + context + "\"");
                 break;
         }
 

@@ -6,6 +6,7 @@ import communctation.Interface.ServerReplication.GameStateObserver;
 import communication.Spread.ReplicateObjectMessageFactory;
 import communication.Spread.SpreadWrapper;
 import spread.SpreadException;
+import spread.SpreadGroup;
 import spread.SpreadMessage;
 
 import java.net.UnknownHostException;
@@ -23,6 +24,7 @@ public class Registrierungsserver implements GameStateObserver {
     private Registry registry;
     private GameServiceImpl game;
     private SpreadWrapper spread;
+    static int spreadNameIncrementer = 0;
 
     public Registrierungsserver()
             throws RemoteException, NotBoundException, InterruptedException {
@@ -30,7 +32,7 @@ public class Registrierungsserver implements GameStateObserver {
             this.game = new GameServiceImpl();
             this.game.setGameStateObserver(this);
 
-            joinSpread("rs1", "localhost");
+            joinSpread("regs" + spreadNameIncrementer++, "localhost");
         } catch (RemoteException | SpreadException | UnknownHostException e) {
             e.printStackTrace();
         }
@@ -108,6 +110,8 @@ public class Registrierungsserver implements GameStateObserver {
         SpreadMessage message;
         try {
             message = factory.createMessage("UPDATE_GAMELOCALLIST", (HashMap<UUID, GameLocal>)gameLocalList);
+            message.addGroup(SpreadWrapper.GroupEnum.SERVER_GROUP.toString());
+            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
             this.spread.sendMessage(message);
         } catch (SpreadException e) {
             e.printStackTrace();

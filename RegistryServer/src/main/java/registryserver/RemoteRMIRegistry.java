@@ -6,14 +6,14 @@
 package registryserver;
 
 import com.google.common.collect.HashMultimap;
+import communication.Spread.ReplicateObjectMessageFactory;
+import communication.Spread.ReplicateRMIMessageListener;
+import communication.Spread.SpreadWrapper;
+import spread.SpreadException;
+import spread.SpreadMessage;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
+import java.net.UnknownHostException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.MarshalledObject;
@@ -24,6 +24,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Set;
+
 
 /**
  *
@@ -38,18 +39,22 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     private enum operation {
         REBIND, UNBIND
     }
+    private SpreadWrapper spread;
+    static int spreadNameIncrementer = 0;
 
-    // Private class which saves hostnames and stubs from bound hosts
+    // Public class which saves hostnames and stubs from bound hosts
     // Used for synchronization between Registry Servers and for persistence in a local hash map
-    private static class BoundHost implements Serializable {
+    // edit Carlos: is now public so it is accessible by ReplicateRMIMessageListener
+    private class BoundHost implements Serializable {
         private String hostname;
         private Remote stub;
 
-        private BoundHost(String host, Remote stub) {
+        public BoundHost(String host, Remote stub) {
             this.hostname = host;
             this.stub = stub;
         }
     }
+
 
     // Constructor
     @SuppressWarnings("unchecked")
@@ -59,10 +64,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         super();
 
         // Ablauf
-        // todo: 1. Andere RMI Registry über Spread abfragen
-
-
-        // 2. Lokale Datei einlesen bzw. neu anlegen
+        // 1. Lokale Datei einlesen bzw. neu anlegen
         try {
             this.bindingFile = bindingFile;
             ObjectInputStream input = new ObjectInputStream(new FileInputStream(bindingFile));
@@ -72,6 +74,13 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         } catch (FileNotFoundException e) {
             // No other registry, no persistent file -> new run of Registry gameserver(s)
             this.objectServers = HashMultimap.create();
+        }
+
+        // 2. Spread joinen - ggf wird objectServers ueberschrieben
+        try {
+            joinSpread("rmi" + spreadNameIncrementer++, "localhost");
+        } catch (SpreadException e) {
+            e.printStackTrace();
         }
     }
 
@@ -140,8 +149,8 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
 
     private synchronized void addObjectServer(String name, BoundHost host) {
         objectServers.put(name, host);
-        // TODO: spread message
         persistBoundHosts();
+        replicateRMIRegistryState();
     }
 
     private synchronized void removeObjectServer(String name, String hostname, int method) {
@@ -174,9 +183,16 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
                         " was not bound from host " + hostname + ". Nothing to do...");
             }
         }
-
-        // TODO: spread message
         persistBoundHosts();
+        replicateRMIRegistryState();
+    }
+
+    /**
+     * Used by ReplicateRMIMessageListener to replicate state
+     * @param objectServers
+     */
+    public synchronized void setObjectServers(HashMultimap<String, BoundHost> objectServers) {
+        this.objectServers = objectServers;
     }
 
     @SuppressWarnings("unchecked")
@@ -214,6 +230,37 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
                     throw new AlreadyBoundException(name);
                 }
             }
+        }
+    }
+
+    /**
+     * Join in the Spread Communication
+     * @param privateName   private Name
+     * @param hostName      hostname that is hosting daemon (localhost)
+     * @throws SpreadException
+     * @throws UnknownHostException
+     */
+    private void joinSpread(String privateName, String hostName) throws SpreadException, UnknownHostException {
+        this.spread = new SpreadWrapper(privateName, hostName);
+        this.spread.addReplicateRMIMessageListener(new ReplicateRMIMessageListener(this));
+        this.spread.joinGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP);
+        this.spread.joinGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP);
+    }
+
+    /**
+     * Sends the objectServers HashMultimap via Spread
+     */
+    public void replicateRMIRegistryState() {
+        ReplicateObjectMessageFactory factory = new ReplicateObjectMessageFactory();
+
+        SpreadMessage message;
+        try {
+            message = factory.createMessage("UPDATE_RMIREGISTRY", this.objectServers);
+            message.addGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString());
+            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
+            this.spread.sendMessage(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -8,14 +8,9 @@ package communication.Spread;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-
 import Service.Alcatraz.AlcatrazRemote.Implementation.GameServiceImpl;
 import communication.Spread.TestSpread.TestReplicateObjectMessageListener;
-import communication.Spread.ReplicateRMIMessageListener;
-import spread.SpreadConnection;
-import spread.SpreadException;
-import spread.SpreadGroup;
-import spread.SpreadMessage;
+import spread.*;
 
 
 /**
@@ -233,8 +228,12 @@ public class SpreadWrapper {
         this.connection.add(new ReplicateGameMessageListener(this.gameService));
     }
 
-    public void addReplicateRMIMessageListener() {
-        this.connection.add(new ReplicateRMIMessageListener());
+    /**
+     * Listener must be AdvancedMessageListener b/c moved to RegistryServer
+     * @param listener
+     */
+    public void addReplicateRMIMessageListener(AdvancedMessageListener listener) {
+        this.connection.add(listener);
     }
 
     public void addTestReplicateObjectMessageListener() { this.connection.add(new TestReplicateObjectMessageListener()); }
