@@ -1,11 +1,13 @@
 package Service.Alcatraz.AlcatrazRemote.Implementation;
 
 import Service.Alcatraz.AlcatrazRemote.Interface.GameRemote;
+import Service.Alcatraz.gameData.GameState;
 import Service.Alcatraz.serviceData.Gamer;
 import at.falb.games.alcatraz.api.Alcatraz;
 import at.falb.games.alcatraz.api.MoveListener;
 import at.falb.games.alcatraz.api.Player;
 import at.falb.games.alcatraz.api.Prisoner;
+import communctation.Implementation.Ping;
 import communctation.Interface.Observable;
 import communctation.Interface.Observer;
 
@@ -15,6 +17,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.function.Predicate;
 
 
 public class GameImpl extends UnicastRemoteObject implements GameRemote , Observable, MoveListener {
@@ -25,8 +28,12 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
     private Observer observer;
 
     private int myPosition;
-    private int currentPosition = 0;
+
     private int maxPosition;
+    private GameState gameState;
+    private boolean error;
+    private Timer timer;
+
 
     public GameImpl(UUID gameID) throws RemoteException {
         super();
@@ -48,75 +55,112 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
 
     @Override
     public void startGame(Map<String, Gamer> gamer , String myPlayerName) throws RemoteException {
-
-        this.myPosition = getmyNumber(new ArrayList<Gamer>(gamer.values()), gamer.get(myPlayerName));
+        Gamer temp = gamer.get(myPlayerName);
+         timer = new Timer();
         this.maxPosition = gamer.values().size();
         this.playerName = myPlayerName;
 
         gamer.remove(myPlayerName);
         this.gamerList = gamer;
+        this.gameState = new GameState(this.gamerList.values(),maxPosition);
+        this.myPosition = gameState.calculatePosition(temp);
+
+
         this.alcatraz = new Alcatraz();
         this.alcatraz.addMoveListener(this);
-
+        this.alcatraz.init(this.maxPosition,this.myPosition);
+        this.alcatraz.showWindow();
     }
-    private int getmyNumber(ArrayList<Gamer> gamers , Gamer myGamerObject) {
-        gamers.sort(Comparator.comparing(Gamer::getName));
-        return  gamers.indexOf(myGamerObject);
-    }
-    public void startNewRound(){
 
-    }
-    public void prepareNewRound(){
 
-        this.gamerList.values().forEach((gamer)->{
-            gamer.setConfirmed(false);
+    //@Override
+   /* public void confirm(String playerName) throws RemoteException{
+        this.gamerList.get(playerName).setConfirmed();
+        if(this.gameState.next()){
+            //if(this.gameState.getCurrentState()== GameState.State.TOKEN_PASSED) passToken("");
+            //else if(this.gameState.getCurrentState()== GameState.State.TOKEN_PASSED)startNewRound();
+        } else{
+            gamerList.values().stream().filter(((Predicate<Gamer>) Gamer::isConfirmed).negate()).forEach((gamer) -> {
+                try {
+                    GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint() + "/gameClient");
+                } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                    this.gamerList.remove(gamer.getName());
+                }
+            });
+            gamerList.values().forEach((gamer) -> {
+                try {
+                    GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint() + "/gameClient");
+                    game.abortGame();
+                } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }*/
+    public void initAbort(){
+        gamerList.values().forEach((gamer) -> {
+            try {
+                GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint() + "/gameClient");
+                game.abortGame();
+            } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                e.printStackTrace();
+            }
         });
-        if(currentPosition == myPosition){
-            //passtoken(currentPosition = currentPosition++ % numberofPlayers)
-            startNewRound();
-        }
-    }
-
-
-    @Override
-    public void confirmMove(String playerName) throws RemoteException{
-        this.gamerList.get(playerName).setConfirmed(true);
-    }
-    @Override
-    public void doOthersMove(String playerName,Player player, Prisoner prisoner, int rowOrCol, int row, int col){
-        alcatraz.doMove(alcatraz.getPlayer(player.getId()), alcatraz.getPrisoner(prisoner.getId()), rowOrCol, row, col);
-        Gamer gamer = this.gamerList.get(playerName);
         try {
-            GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient");
-            game.confirmMove(playerName);
-        }
-        catch (NotBoundException | RemoteException | MalformedURLException e) {
+            this.abortGame();
+        } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
-
-    public void doMove(Player player, Prisoner prisoner, int rowOrCol, int row, int col){
-        alcatraz.doMove(alcatraz.getPlayer(player.getId()), alcatraz.getPrisoner(prisoner.getId()), rowOrCol, row, col);
+    @Override
+    public void ping() throws RemoteException {
+        System.out.println("ping");
     }
 
-    //Listens on Ui for valid move.
+    @Override
+    public void abortGame() throws RemoteException {
+       // this.alcatraz.closeWindow();
+        System.out.println("Game is over ");
+    }
+
+    @Override
+    public void doOthersMove(String playerName,Player player, Prisoner prisoner, int rowOrCol, int row, int col){
+        timer.cancel();
+        alcatraz.doMove(alcatraz.getPlayer(player.getId()), alcatraz.getPrisoner(prisoner.getId()), rowOrCol, row, col);
+        this.gameState.next();
+    }
+
+
     @Override
     public void moveDone(Player player, Prisoner prisoner, int rowOrCol, int row, int col) {
-        doMove(player,prisoner,rowOrCol,row,col);
         this.gamerList.values().forEach((gamer)->{
             try {
                 GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient");
                 game.doOthersMove(this.playerName, player, prisoner,  rowOrCol, row,  col);
+
             }
             catch (NotBoundException | RemoteException | MalformedURLException e) {
-                e.printStackTrace();
+                this.error = true;
             }
         });
+        if(this.error){ this.initAbort();}
+        else{
+            this.gameState.next();
+
+            try {
+                GameRemote game = (GameRemote) Naming.lookup(this.gameState.getCurrentGamer()+"/gameClient");
+                timer.schedule(new Ping(game,this), 0, 5000);
+
+                } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                this.initAbort();
+            }
+        }
+
     }
 
     @Override
     public void gameWon(Player player) {
-
+        System.out.println("Yeah you won .....");
     }
 }
