@@ -12,7 +12,7 @@ public class RegistryService {
 
     private static  ArrayList<String> rmiRegistryAddresses = new ArrayList<String>() {{
         add("localhost");
-        add("localhost");
+       // add("localhost");
     }};
     public static Registry getRegistry(){
         Registry reg = null;

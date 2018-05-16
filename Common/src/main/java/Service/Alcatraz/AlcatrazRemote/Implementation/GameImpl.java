@@ -11,13 +11,17 @@ import communctation.Implementation.Ping;
 import communctation.Interface.Observable;
 import communctation.Interface.Observer;
 
+import javax.swing.*;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.Timer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 public class GameImpl extends UnicastRemoteObject implements GameRemote , Observable, MoveListener {
@@ -55,48 +59,28 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
 
     @Override
     public void startGame(Map<String, Gamer> gamer , String myPlayerName) throws RemoteException {
-        Gamer temp = gamer.get(myPlayerName);
+        ArrayList<Gamer> tempList =(ArrayList<Gamer>) gamer.values().stream().map(item -> new Gamer(item.getName(),item.getEndpoint())).collect(Collectors.toList());
+        Gamer temp = tempList.stream().filter(g-> g.getName().equals(myPlayerName)).findFirst().get();
          timer = new Timer();
         this.maxPosition = gamer.values().size();
         this.playerName = myPlayerName;
 
+        this.gameState = new GameState(tempList, maxPosition);
+        this.myPosition = gameState.calculatePosition(temp);
         gamer.remove(myPlayerName);
         this.gamerList = gamer;
-        this.gameState = new GameState(this.gamerList.values(),maxPosition);
-        this.myPosition = gameState.calculatePosition(temp);
 
 
         this.alcatraz = new Alcatraz();
         this.alcatraz.addMoveListener(this);
+        System.out.println(this.maxPosition);
+        System.out.println(this.myPosition);
         this.alcatraz.init(this.maxPosition,this.myPosition);
         this.alcatraz.showWindow();
+        this.alcatraz.start();
     }
 
 
-    //@Override
-   /* public void confirm(String playerName) throws RemoteException{
-        this.gamerList.get(playerName).setConfirmed();
-        if(this.gameState.next()){
-            //if(this.gameState.getCurrentState()== GameState.State.TOKEN_PASSED) passToken("");
-            //else if(this.gameState.getCurrentState()== GameState.State.TOKEN_PASSED)startNewRound();
-        } else{
-            gamerList.values().stream().filter(((Predicate<Gamer>) Gamer::isConfirmed).negate()).forEach((gamer) -> {
-                try {
-                    GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint() + "/gameClient");
-                } catch (NotBoundException | MalformedURLException | RemoteException e) {
-                    this.gamerList.remove(gamer.getName());
-                }
-            });
-            gamerList.values().forEach((gamer) -> {
-                try {
-                    GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint() + "/gameClient");
-                    game.abortGame();
-                } catch (NotBoundException | MalformedURLException | RemoteException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-    }*/
     public void initAbort(){
         gamerList.values().forEach((gamer) -> {
             try {
@@ -115,12 +99,16 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
 
     @Override
     public void ping() throws RemoteException {
-        System.out.println("ping");
+        try {
+            System.out.println(getClientHost()+"ping");
+        } catch (ServerNotActiveException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void abortGame() throws RemoteException {
-       // this.alcatraz.closeWindow();
+        JOptionPane.showMessageDialog(this.alcatraz.getGameBoard(), "Error one Player left", "error",JOptionPane.ERROR_MESSAGE);
         System.out.println("Game is over ");
     }
 
@@ -138,9 +126,9 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
             try {
                 GameRemote game = (GameRemote) Naming.lookup(gamer.getEndpoint()+"/gameClient");
                 game.doOthersMove(this.playerName, player, prisoner,  rowOrCol, row,  col);
-
             }
             catch (NotBoundException | RemoteException | MalformedURLException e) {
+                e.printStackTrace();
                 this.error = true;
             }
         });
@@ -149,10 +137,12 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
             this.gameState.next();
 
             try {
-                GameRemote game = (GameRemote) Naming.lookup(this.gameState.getCurrentGamer()+"/gameClient");
+                GameRemote game = (GameRemote) Naming.lookup(this.gameState.getCurrentGamer().getEndpoint()+"/gameClient");
                 timer.schedule(new Ping(game,this), 0, 5000);
 
                 } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                    e.printStackTrace();
+                    this.gamerList.remove(this.gameState.getCurrentGamer().getName());
                 this.initAbort();
             }
         }

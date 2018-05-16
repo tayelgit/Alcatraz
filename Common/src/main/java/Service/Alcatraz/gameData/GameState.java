@@ -19,7 +19,7 @@ public class GameState {
     }
 
     public void next(){
-        this.currentPosition= currentPosition++ % this.maxPostion;
+        this.currentPosition= (currentPosition+1) % this.maxPostion;
     }
 
     public int getCurrentPosition(){
