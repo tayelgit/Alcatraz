@@ -2,6 +2,7 @@ package rmiUtil;
 
 import Service.Alcatraz.AlcatrazRemote.Interface.GameServiceRemote;
 
+import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -11,30 +12,27 @@ import java.util.ArrayList;
 public class RegistryService {
 
     private static  ArrayList<String> rmiRegistryAddresses = new ArrayList<String>() {{
-        add("localhost");
-       // add("localhost");
+        add("192.168.21.107");
+        add("192.168.21.110");
     }};
-    public static Registry getRegistry(){
+
+    public static Registry getRegistry() {
         Registry reg = null;
-        try {
-
-
-            for (String address : rmiRegistryAddresses) {
-                try {
-                    reg = LocateRegistry.getRegistry(address, 1099);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                    System.out.println("Couldn't create reference to " + address + ". Trying next address...");
-                    continue;
-                }
-
+        for (String address : rmiRegistryAddresses) {
+            try {
+                reg = LocateRegistry.getRegistry(address, 1099);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } try {
                 reg = (Registry) reg.lookup("reg");
-                break;
-            }
-
-        } catch (RemoteException | NotBoundException e) {
-            e.printStackTrace();
+            } catch (RemoteException | NotBoundException e) {
+                e.printStackTrace();
+                System.out.println("Couldn't make lookup at " + address + ". Trying next address...");
+                continue;
+                }
+            break;
         }
+
         return reg;
     }
 

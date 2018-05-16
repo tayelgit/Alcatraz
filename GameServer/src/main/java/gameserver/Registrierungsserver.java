@@ -38,6 +38,7 @@ public class Registrierungsserver implements GameStateObserver {
 
         this.rmiRegistryAddresses = new ArrayList<String>();
         //this.rmiRegistryAddresses.add("127.0.0.1");
+        this.rmiRegistryAddresses.add("192.168.21.107");
         this.rmiRegistryAddresses.add("192.168.21.110");
 
         bindToRmiRegistry();
@@ -68,18 +69,24 @@ public class Registrierungsserver implements GameStateObserver {
      * @throws NotBoundException
      */
     public void bindToRmiRegistry() throws RemoteException, NotBoundException {
-        Registry registry;
+        registry = null;
 
         for (String address : rmiRegistryAddresses) {
+
             try {
                 registry = LocateRegistry.getRegistry(address, 1099);
             } catch (RemoteException e) {
                 e.printStackTrace();
-                System.out.println("Couldn't create reference to " + address + ". Trying next address...");
+            }
+
+            try {
+                this.registry = (Registry) registry.lookup("reg");
+            } catch (RemoteException | NotBoundException e) {
+                e.printStackTrace();
+                System.out.println("Couldn't make lookup at " + address + ". Trying next address...");
                 continue;
             }
 
-            this.registry = (Registry) registry.lookup("reg");
             break;
         }
 

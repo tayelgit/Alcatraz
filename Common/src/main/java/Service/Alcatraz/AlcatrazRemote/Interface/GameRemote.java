@@ -4,6 +4,8 @@ import Service.Alcatraz.serviceData.Gamer;
 import at.falb.games.alcatraz.api.Player;
 import at.falb.games.alcatraz.api.Prisoner;
 
+import java.net.MalformedURLException;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ public interface GameRemote extends Remote{
 
     void notifyStateChanged() throws RemoteException;
     //void ping();
-    void startGame(Map<String, Gamer> gamer , String myPlayerName) throws RemoteException;
+    void startGame(Map<String, Gamer> gamer , String myPlayerName) throws RemoteException, MalformedURLException, NotBoundException;
     void doOthersMove(String playerName, Player player, Prisoner prisoner, int rowOrCol, int row, int col)throws  RemoteException;
 
     void ping() throws RemoteException;
