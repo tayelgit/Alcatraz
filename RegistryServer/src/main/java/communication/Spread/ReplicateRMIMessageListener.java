@@ -1,11 +1,14 @@
 package communication.Spread;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import registryserver.RemoteRMIRegistry;
 import registryserver.RemoteRMIRegistry.BoundHost;
 import spread.*;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.rmi.MarshalledObject;
 import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.Vector;
@@ -67,7 +70,13 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
             } else if (g.toString().equals(SpreadWrapper.GroupEnum.SERVER_GROUP.toString())) {
                 System.out.println("Shouldn't be in here ...");
             } else if (g.toString().equals(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString())) {
-                replicateObject(context, messageDigestVector);
+                try {
+                    replicateObject(context, messageDigestVector);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -190,15 +199,18 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
      * @param messageDigest the message digest that holds the data
      * @return  true if everything goes well
      */
-    boolean replicateObject(String context, Vector messageDigest) {
+    boolean replicateObject(String context, Vector messageDigest) throws IOException, ClassNotFoundException {
         boolean retValue = false;
 
         switch (context) {
             case "UPDATE_RMIREGISTRY":     // expected digest is Serializable (b/c no dep to RegistryServer!)
                 System.out.println("in replicateObject -> UPDATE_RMIREGISTRY");
 
-                HashMultimap<String, BoundHost> objectServers =
-                        (HashMultimap<String, BoundHost>)messageDigest.get(1);
+                //HashMultimap<String, BoundHost> objectServers =
+                        //(HashMultimap<String, BoundHost>)messageDigest.get(1);
+
+                MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject)messageDigest.get(1);
+                HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();
 
                 this.remoteRMIRegistry.setObjectServers(objectServers);
 

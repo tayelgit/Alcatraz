@@ -72,10 +72,12 @@
             <version>23.0</version>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.spread</groupId>
             <artifactId>spreadlib</artifactId>
             <version>4.0.0</version>
         </dependency>
+        -->
     </dependencies>
 </project>

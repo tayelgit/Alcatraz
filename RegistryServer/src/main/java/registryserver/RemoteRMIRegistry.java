@@ -48,7 +48,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     // Public class which saves hostnames and stubs from bound hosts
     // Used for synchronization between Registry Servers and for persistence in a local hash map
     // edit Carlos: is now public so it is accessible by ReplicateRMIMessageListener
-    public class BoundHost implements Serializable {
+    public static class BoundHost implements Serializable {
         private String hostname;
         private Remote stub;
 
@@ -106,7 +106,11 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         String hostname = getHostname();
         checkArguments(name, obj);
         checkObjectServerBound(name, hostname);
-        addObjectServer(name, new BoundHost(hostname, obj));
+        try {
+            addObjectServer(name, new BoundHost(hostname, obj));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("Remote object " + name + " now bound from host " + hostname);
         Set<BoundHost> hosts = objectServers.get(name);
         for (BoundHost host : hosts) {
@@ -119,7 +123,11 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         String hostname = getHostname();
         checkArguments(name);
         checkRemoteObjectExists(name);
-        removeObjectServer(name, hostname, operation.UNBIND.ordinal());
+        try {
+            removeObjectServer(name, hostname, operation.UNBIND.ordinal());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println(objectServers.toString());
     }
 
@@ -127,8 +135,16 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             throws RemoteException, AccessException {
         String hostname = getHostname();
         checkArguments(name, obj);
-        removeObjectServer(name, hostname, operation.REBIND.ordinal());
-        addObjectServer(name, new BoundHost(hostname, obj));
+        try {
+            removeObjectServer(name, hostname, operation.REBIND.ordinal());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            addObjectServer(name, new BoundHost(hostname, obj));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("Remote object " + name + " now bound from host " + hostname);
     }
 
@@ -151,13 +167,13 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         return hostname;
     }
 
-    private synchronized void addObjectServer(String name, BoundHost host) {
+    private synchronized void addObjectServer(String name, BoundHost host) throws IOException {
         objectServers.put(name, host);
         persistBoundHosts();
         replicateRMIRegistryState();
     }
 
-    private synchronized void removeObjectServer(String name, String hostname, int method) {
+    private synchronized void removeObjectServer(String name, String hostname, int method) throws IOException {
         BoundHost deleteHost = null;
         boolean hostFound = false;
         System.out.println("before: " + objectServers.toString());
@@ -254,12 +270,12 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     /**
      * Sends the objectServers HashMultimap via Spread
      */
-    public void replicateRMIRegistryState() {
+    public void replicateRMIRegistryState() throws IOException {
         ReplicateObjectMessageFactory factory = new ReplicateObjectMessageFactory();
 
         SpreadMessage message;
         try {
-            message = factory.createMessage("UPDATE_RMIREGISTRY", this.objectServers);
+            message = factory.createMessage("UPDATE_RMIREGISTRY", new MarshalledObject<HashMultimap>(this.objectServers));
             message.addGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString());
             message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
             this.spread.sendMessage(message);
