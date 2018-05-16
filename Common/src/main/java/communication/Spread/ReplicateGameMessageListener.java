@@ -59,17 +59,35 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
             if(g.toString().equals(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString())) {
                 switch (context) {
                     case "HELLO_INIT" :
-                        // Other GameServer joined and says hello - lets send him a response!
+                        // i - expected
+                        // 0 - context (HELLO_INIT/HELLO_RESPONSE)
+                        // 1 - senderType (GAME_SERVER/RMI_REGISTRY)
+                        // 2 - IP           \_ not handled here
+                        // 3 - privateName  /  see ReplicateRMIMessageListener
+
+                        String senderType = (String)messageDigestVector.get(1);
                         String sender = spreadMessage.getSender().toString();
-                        gameService.answerGameServerHello(sender, gameService.getGameLocalList());
+
+                        if(senderType.equals("GAME_SERVER")) {
+                            gameService.answerGameServerHello(sender, gameService.getGameLocalList());
+                        }
 
                         break;
                     case "HELLO_RESPONSE" :
+                        // i - expected
+                        // 0 - context (HELLO_INIT/HELLO_RESPONSE)
+                        // 1 - recipient
+                        // 2 - recipientType (GAME_SERVER/RMI_REGISTRY)
+                        // 3 - HashMap gameLocalList
+
                         String recipient = (String) messageDigestVector.get(1);
+                        String recipientType = (String) messageDigestVector.get(2);
                         System.out.println("HelloResponse for: \"" + recipient + "\"");
                         // message for me?
-                        if(recipient.equals(privateName) && !initDone) {
-                            HashMap<UUID, GameLocal> gameLocalList = (HashMap<UUID,GameLocal>) messageDigestVector.get(2);
+                        if(recipient.equals(privateName)
+                                && recipientType.equals("GAME_SERVER")
+                                && !initDone) {
+                            HashMap<UUID, GameLocal> gameLocalList = (HashMap<UUID,GameLocal>) messageDigestVector.get(3);
                             gameService.setGameLocalList(gameLocalList);
                             initDone = true;
                         }

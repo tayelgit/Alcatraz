@@ -6,7 +6,6 @@ import communctation.Interface.ServerReplication.GameStateObserver;
 import communication.Spread.ReplicateObjectMessageFactory;
 import communication.Spread.SpreadWrapper;
 import spread.SpreadException;
-import spread.SpreadGroup;
 import spread.SpreadMessage;
 
 import java.net.InetAddress;
@@ -45,7 +44,7 @@ public class Registrierungsserver implements GameStateObserver {
 
         // localIP for RMI
         String localIP = getLocalIP("192");
-        spread.sendHello(localIP, spread.getPrivateName());
+        spread.sendGameServerHello(localIP, spread.getPrivateName());
 
         //this.game.createGame("My Game", 2);
         //this.game.createGame("Some other Game", 4);

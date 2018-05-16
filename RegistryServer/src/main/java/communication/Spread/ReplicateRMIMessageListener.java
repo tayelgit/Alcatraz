@@ -15,12 +15,16 @@ import java.util.Vector;
 
 public class ReplicateRMIMessageListener implements AdvancedMessageListener {
     private RemoteRMIRegistry remoteRMIRegistry;
+    private String privateName;
     private boolean initDone = false;
 
     /**
      * Ctor
      */
-    public ReplicateRMIMessageListener(RemoteRMIRegistry remoteRMIRegistry) { this.remoteRMIRegistry = remoteRMIRegistry; }
+    public ReplicateRMIMessageListener(RemoteRMIRegistry remoteRMIRegistry, String privateName) {
+        this.remoteRMIRegistry = remoteRMIRegistry;
+        this.privateName = privateName;
+    }
     /**
      * Reacts to regular messages
      * Regular messages are all messages that aren't membership messages
@@ -56,12 +60,53 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
             if(g.toString().equals(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString())) {
                 switch (context) {
                     case "HELLO_INIT" :
-                        String ip = (String) messageDigestVector.get(1);
-                        String privateName = (String) messageDigestVector.get(2);
-                        this.remoteRMIRegistry.addSpreadBoundHost(privateName, ip);
+                        // i - expected
+                        // 0 - context (HELLO_INIT/HELLO_RESPONSE)
+                        // 1 - senderType (GAME_SERVER/RMI_REGISTRY)
+                        // 2 - IP
+                        // 3 - privateName
+
+                        // sender GameServer or RMI?
+                        String senderType = (String) messageDigestVector.get(1);
+                        String sender = spreadMessage.getSender().toString();
+
+                        // remember GameServer in RMI
+                        if(senderType.equals("GAME_SERVER")) {
+                            String ip = (String) messageDigestVector.get(2);
+                            String privateName = (String) messageDigestVector.get(3);
+                            this.remoteRMIRegistry.addSpreadBoundHost(privateName, ip);
+                        }
+
+                        // If Hello from RMI_REGISTRY
+                        if(senderType.equals("RMI_REGISTRY")) {
+                            this.remoteRMIRegistry.answerRMIHello(sender);
+                        }
+
                         break;
                     case "HELLO_RESPONSE" :
-                        System.out.println("Nothing to do for HELLO_RESPONSE");
+                        // i - expected
+                        // 0 - context (HELLO_INIT/HELLO_RESPONSE)
+                        // 1 - recipient
+                        // 2 - recipientType (GAME_SERVER/RMI_REGISTRY)
+                        // 3 - HashMultimap objectServer
+
+                        String recipient = (String) messageDigestVector.get(1);
+                        String recipientType = (String) messageDigestVector.get(2);
+                        System.out.println("HelloResponse for: \"" + recipient + "\"");
+                        // message for me?
+                        if(recipient.equals(this.privateName)
+                                && recipientType.equals("RMI_REGISTRY")
+                                && !this.initDone) {
+                            try {
+                                MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject)messageDigestVector.get(3);
+                                HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();
+                                this.remoteRMIRegistry.setObjectServers(objectServers);
+                                this.initDone = true;
+                            } catch (IOException | ClassNotFoundException e) {
+                                e.printStackTrace();
+                                System.out.println("Couldn't deserialize HashMultimap...");
+                            }
+                        }
                         break;
                     default:
                         System.out.println("Don't know what to do with message context: \"" + context + "\"");
@@ -139,6 +184,20 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
             String sender = spreadMessage.getSender().toString();
 
             HashMap<String, String> hosts = this.remoteRMIRegistry.getSpreadBoundHosts();
+            String value_IP = hosts.get(sender);
+
+            if (value_IP == null) {
+                System.out.println("SpreadBoundHost " + sender + " already removed");
+                return;
+            }
+
+            try {
+                this.remoteRMIRegistry.removeObjectServer("gamelist", value_IP, 2);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Error removing " + sender + "(" + value_IP + ")");
+            }
+
             hosts.remove(sender);
             this.remoteRMIRegistry.setSpreadBoundHosts(hosts);
             this.remoteRMIRegistry.replicateSpreadBoundHosts();

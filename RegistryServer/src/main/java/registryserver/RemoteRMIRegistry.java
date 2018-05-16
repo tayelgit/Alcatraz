@@ -167,13 +167,13 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         return hostname;
     }
 
-    private synchronized void addObjectServer(String name, BoundHost host) throws IOException {
+    public synchronized void addObjectServer(String name, BoundHost host) throws IOException {
         objectServers.put(name, host);
         persistBoundHosts();
         replicateRMIRegistryState();
     }
 
-    private synchronized void removeObjectServer(String name, String hostname, int method) throws IOException {
+    public synchronized void removeObjectServer(String name, String hostname, int method) throws IOException {
         BoundHost deleteHost = null;
         boolean hostFound = false;
         System.out.println("before: " + objectServers.toString());
@@ -262,7 +262,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
      */
     private void joinSpread(String privateName, String hostName) throws SpreadException, UnknownHostException {
         this.spread = new SpreadWrapper(privateName, hostName);
-        this.spread.addReplicateRMIMessageListener(new ReplicateRMIMessageListener(this));
+        this.spread.addReplicateRMIMessageListener(new ReplicateRMIMessageListener(this, privateName));
         this.spread.joinGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP);
         this.spread.joinGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP);
     }
@@ -309,4 +309,22 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         }
     }
 
+    public void answerRMIHello(String sender) {
+        SpreadMessage message = new SpreadMessage();
+        try {
+            message.setReliable();
+
+            message.digest("HELLO_RESPONSE");
+            message.digest("RMI_REGISTRY");
+            message.digest(sender);
+
+            message.digest(this.objectServers);
+
+            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
+
+            this.spread.sendMessage(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+    }
 }

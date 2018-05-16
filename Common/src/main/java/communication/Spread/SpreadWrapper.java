@@ -244,7 +244,7 @@ public class SpreadWrapper {
      * Should only be used by GameServer
      * @param localIP
      */
-    public void sendHello(String localIP, String privateName) throws SpreadException {
+    public void sendGameServerHello(String localIP, String privateName) throws SpreadException {
         // to ensure that only GameServer uses this
         if(privateName.startsWith("rmi")) return;
 
@@ -253,6 +253,7 @@ public class SpreadWrapper {
         message.setReliable();
 
         message.digest("HELLO_INIT");
+        message.digest("GAME_SERVER");
         message.digest(localIP);
         message.digest(privateName);
 
@@ -262,7 +263,7 @@ public class SpreadWrapper {
     }
 
     /**
-     *
+     * Called by GameServer
      * @param recipient
      * @throws SpreadException
      */
@@ -272,6 +273,7 @@ public class SpreadWrapper {
         message.setReliable();
 
         message.digest("HELLO_RESPONSE");
+        message.digest("GAME_SERVER");
         message.digest(recipient);
         message.digest(this.gameService.getGameLocalList());
 
