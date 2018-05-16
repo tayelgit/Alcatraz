@@ -27,7 +27,10 @@ public class Gamer implements Serializable {
         return confirmed;
     }
 
-    public void setConfirmed(boolean confirmed) {
-        this.confirmed = confirmed;
+    public void setConfirmed() {
+        this.confirmed = true;
+    }
+    public void resetConfirmed() {
+        this.confirmed = false;
     }
 }

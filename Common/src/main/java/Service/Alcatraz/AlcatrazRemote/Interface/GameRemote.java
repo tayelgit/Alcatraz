@@ -20,8 +20,9 @@ public interface GameRemote extends Remote{
     //void ping();
     void startGame(Map<String, Gamer> gamer , String myPlayerName) throws RemoteException;
     void doOthersMove(String playerName, Player player, Prisoner prisoner, int rowOrCol, int row, int col)throws  RemoteException;
-    //void passMove(String gamer, Prisoner prisoner);
-    void confirmMove(String playerName) throws RemoteException;
-    //void passToken(String gamer);
+
+    void ping() throws RemoteException;
+   // void passToken(String playerName)throws  RemoteException;
+    void abortGame()throws  RemoteException;
     //void confirmTokenPass();
 }

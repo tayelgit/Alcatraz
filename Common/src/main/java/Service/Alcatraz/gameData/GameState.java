@@ -10,32 +10,24 @@ public class GameState {
     private ArrayList<Gamer> gamers;
     private int currentPosition;
     private int maxPostion;
-    private State currentState;
-
-    public enum State {
-        MOVE_DONE, PREPARE_NEXT_ROUND, TOKEN_PASSED, START_NEW_ROUND;
-        private static State[] vals = values();
-
-        public State next() {
-            return vals[(this.ordinal() + 1) % vals.length];
-        }
-    }
 
 
-    public GameState(Collection gamers){
+    public GameState(Collection gamers, int maxPostion){
         this.gamers = new ArrayList<Gamer>(gamers);
-        this.currentState = State.MOVE_DONE;
         this.currentPosition = 0 ;
+        this.maxPostion = maxPostion;
     }
-
 
     public void next(){
-
-
-       this.currentState = currentState.next();
-
+        this.currentPosition= currentPosition++ % this.maxPostion;
     }
 
+    public int getCurrentPosition(){
+        return this.currentPosition;
+    }
+    public Gamer getCurrentGamer(){
+        return gamers.get(this.currentPosition);
+    }
 
     public int calculatePosition( Gamer myGamerObject) {
         gamers.sort(Comparator.comparing(Gamer::getName));
