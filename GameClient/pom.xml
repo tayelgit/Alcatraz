@@ -12,40 +12,46 @@
     <artifactId>GameClient</artifactId>
 
     <build>
+        <finalName>GameClient</finalName>
         <plugins>
             <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.2</version>
                 <executions>
                     <execution>
-                        <id>default-jar</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
                         <configuration>
-                            <finalName>dummy</finalName>
+                            <file>${project.basedir}/lib/alcatraz-lib.jar</file>
+                            <groupId>com.alcatraz-lib</groupId>
+                            <artifactId>alcatraz-lib</artifactId>
+                            <version>1.0</version>
+                            <packaging>jar</packaging>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>gameclient.GameClient</mainClass>
-                        </manifest>
-                    </archive>
-                    <finalName>GameClient</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.1</version>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>gameclient.GameClient</mainClass>
+                                </transformer>
+                            </transformers>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -60,6 +66,11 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.alcatraz-lib</groupId>
+            <artifactId>alcatraz-lib</artifactId>
+            <version>1.0</version>
+        </dependency>
 
     </dependencies>
 
