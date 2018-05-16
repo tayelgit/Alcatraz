@@ -12,8 +12,8 @@ import java.util.ArrayList;
 public class RegistryService {
 
     private static  ArrayList<String> rmiRegistryAddresses = new ArrayList<String>() {{
-        add("192.168.21.107");
-        add("192.168.21.110");
+        add("192.168.21.10");
+        add("192.168.21.11");
     }};
 
     public static Registry getRegistry() {

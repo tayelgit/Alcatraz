@@ -42,7 +42,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     }
     private SpreadWrapper spread;
     static int spreadNameIncrementer = 0;
-    private HashMap<String, String> spreadBoundHosts;
+    private static HashMap<String, String> spreadBoundHosts;
 
 
     // Public class which saves hostnames and stubs from bound hosts
