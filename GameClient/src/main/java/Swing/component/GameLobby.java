@@ -103,6 +103,11 @@ public class GameLobby extends JFrame implements Observer {
         }
     }
 
+    @Override
+    public void close() {
+        dispose();
+    }
+
 
     private void handleServerError(){
         this.games = RegistryService.getGameService();
