@@ -9,15 +9,15 @@ import spread.SpreadException;
 import spread.SpreadGroup;
 import spread.SpreadMessage;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class Registrierungsserver implements GameStateObserver {
     private ArrayList<String> rmiRegistryAddresses;
@@ -27,7 +27,7 @@ public class Registrierungsserver implements GameStateObserver {
     static int spreadNameIncrementer = 0;
 
     public Registrierungsserver()
-            throws RemoteException, NotBoundException, InterruptedException {
+            throws RemoteException, NotBoundException, InterruptedException, SpreadException {
         try {
             this.game = new GameServiceImpl();
             this.game.setGameStateObserver(this);
@@ -43,12 +43,16 @@ public class Registrierungsserver implements GameStateObserver {
 
         bindToRmiRegistry();
 
+        // localIP for RMI
+        String localIP = getLocalIP("192");
+        spread.sendHello(localIP, spread.getPrivateName());
+
         //this.game.createGame("My Game", 2);
         //this.game.createGame("Some other Game", 4);
         //this.game.createGame("Whatever Game", 3);
 
-        Thread.sleep(30000);
-        this.registry.unbind("gamelist");
+        //Thread.sleep(30000);
+        //this.registry.unbind("gamelist");
     }
 
     /**
@@ -66,8 +70,6 @@ public class Registrierungsserver implements GameStateObserver {
      */
     public void bindToRmiRegistry() throws RemoteException, NotBoundException {
         Registry registry;
-
-        // TODO: Registry sollte aus RegistryServer kommen?!
 
         for (String address : rmiRegistryAddresses) {
             try {
@@ -116,5 +118,35 @@ public class Registrierungsserver implements GameStateObserver {
         } catch (SpreadException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Gets the local IP
+     * @param ipStartsWith  Filters all InetAddresses for ones that start with this
+     * @return              null if no IP found, IP if found
+     */
+    private String getLocalIP(String ipStartsWith) {
+        String ret = null;
+
+        Enumeration e = null;
+        try {
+            e = NetworkInterface.getNetworkInterfaces();
+        } catch (SocketException e1) {
+            e1.printStackTrace();
+        }
+
+        while(e.hasMoreElements()) {
+            NetworkInterface n = (NetworkInterface) e.nextElement();
+            Enumeration ee = n.getInetAddresses();
+
+            while (ee.hasMoreElements()) {
+                InetAddress i = (InetAddress) ee.nextElement();
+
+                if(i.getHostAddress().startsWith(ipStartsWith))
+                    ret = i.getHostAddress();
+            }
+        }
+
+        return ret;
     }
 }

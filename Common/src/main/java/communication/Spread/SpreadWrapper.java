@@ -38,6 +38,9 @@ public class SpreadWrapper {
      */
     private GameServiceImpl gameService;
 
+
+    private String privateName;
+
     /**
      * Enum GroupEnum for our dedicated Spreadgroups (saves us the hassle to check for validity)
      * (valid chars: ASCII >= 36 && ASCII <= 126)
@@ -69,8 +72,8 @@ public class SpreadWrapper {
      */
     public SpreadWrapper(String privateName, String hostName)
             throws UnknownHostException, SpreadException {
-        //this.gameService = game;
         this.connection = new SpreadConnection();
+        this.privateName = privateName;
 
         //<editor-fold desc="Starting Spread Daemon">
         /*
@@ -91,8 +94,7 @@ public class SpreadWrapper {
         */
         //</editor-fold>
 
-        this.connection.connect(InetAddress.getByName(hostName), 4803, privateName, false, true);
-        //this.connection.add(new ReplicateGameMessageListener(gameService));
+        this.connection.connect(InetAddress.getByName(hostName), 4803, this.privateName, false, true);
     }
     
     /**
@@ -225,7 +227,7 @@ public class SpreadWrapper {
 
     public void addReplicateGameMessageListener(GameServiceImpl game) {
         this.gameService = game;
-        this.connection.add(new ReplicateGameMessageListener(this.gameService));
+        this.connection.add(new ReplicateGameMessageListener(this.gameService, this.privateName));
     }
 
     /**
@@ -238,9 +240,55 @@ public class SpreadWrapper {
 
     public void addTestReplicateObjectMessageListener() { this.connection.add(new TestReplicateObjectMessageListener()); }
 
+    /**
+     *
+     * @param localIP
+     */
+    public void sendHello(String localIP, String privateName) throws SpreadException {
+        SpreadMessage message = new SpreadMessage();
+
+        message.setReliable();
+
+        message.digest("HELLO_INIT");
+        message.digest(localIP);
+        message.digest(privateName);
+
+        message.addGroup(GroupEnum.FAULTTOLERANCE_GROUP.toString());
+
+        connection.multicast(message);
+    }
+
+    /**
+     *
+     * @param receipient
+     * @throws SpreadException
+     */
+    public void sendHelloResponse(String receipient) throws SpreadException {
+        SpreadMessage message = new SpreadMessage();
+
+        message.setReliable();
+
+        message.digest("HELLO_RESPONSE");
+        message.digest(receipient);
+        message.digest(this.gameService.getGameLocalList());
+
+        message.addGroup(GroupEnum.SERVER_GROUP.toString());
+
+        connection.multicast(message);
+    }
+
+    /**
+     * Used in TestSpread
+     * @param message
+     * @throws SpreadException
+     */
     public void sendMessage(SpreadMessage message) throws SpreadException {
         message.setReliable();
         message.addGroup(GroupEnum.FAULTTOLERANCE_GROUP.toString());
         connection.multicast(message);
+    }
+
+    public String getPrivateName() {
+        return this.privateName;
     }
 }

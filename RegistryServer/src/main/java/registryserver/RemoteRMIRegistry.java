@@ -23,6 +23,7 @@ import java.rmi.AlreadyBoundException;
 import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 import java.util.Set;
 
 
@@ -41,6 +42,8 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     }
     private SpreadWrapper spread;
     static int spreadNameIncrementer = 0;
+    private HashMap<String, String> spreadBoundHosts;
+
 
     // Public class which saves hostnames and stubs from bound hosts
     // Used for synchronization between Registry Servers and for persistence in a local hash map
@@ -82,6 +85,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         } catch (SpreadException e) {
             e.printStackTrace();
         }
+        this.spreadBoundHosts = new HashMap<String, String>();
     }
 
 
@@ -263,4 +267,32 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             e.printStackTrace();
         }
     }
+
+
+    public void addSpreadBoundHost(String key_PrivateName, String value_IP) {
+        this.spreadBoundHosts.put(key_PrivateName, value_IP);
+    }
+
+    public void setSpreadBoundHosts(HashMap<String, String> spreadBoundHosts) {
+        this.spreadBoundHosts = spreadBoundHosts;
+    }
+
+    public HashMap<String, String> getSpreadBoundHosts() {
+        return this.spreadBoundHosts;
+    }
+
+    public void replicateSpreadBoundHosts() {
+        ReplicateObjectMessageFactory factory = new ReplicateObjectMessageFactory();
+
+        SpreadMessage message;
+        try {
+            message = factory.createMessage("UPDATE_RMI_SPREADBOUND_HOSTS", this.spreadBoundHosts);
+            message.addGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString());
+            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
+            this.spread.sendMessage(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

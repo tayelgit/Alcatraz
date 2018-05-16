@@ -135,6 +135,10 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
         this.gameLocalList.values().forEach((g)-> System.out.println(g.getTakenPlaces()));
     }
 
+    public HashMap<UUID,GameLocal> getGameLocalList() {
+        return (HashMap<UUID,GameLocal>)this.gameLocalList;
+    }
+
     /**
      * Removes a specific game and adds the game with the same UUID again
      * @param game  to be updated

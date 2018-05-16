@@ -6,10 +6,13 @@ import registryserver.RemoteRMIRegistry.BoundHost;
 import spread.*;
 
 import java.io.Serializable;
+import java.sql.SQLOutput;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class ReplicateRMIMessageListener implements AdvancedMessageListener {
     private RemoteRMIRegistry remoteRMIRegistry;
+    private boolean initDone = false;
 
     /**
      * Ctor
@@ -23,6 +26,53 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
      */
     @Override
     public void regularMessageReceived(SpreadMessage spreadMessage) {
+        /*
+         * ##### Digest received message #####
+         * Protocol ensures, that first digest is context
+         * Context is a string that provides replication context used to replicate object
+         * Digest after the first is either the object to be replicated
+         * or an ArrayList of objects to be replicated
+         */
+        Vector messageDigestVector = null;
+        try {
+            messageDigestVector = spreadMessage.getDigest();
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+
+        if(messageDigestVector == null)
+            return;
+
+        // context - what to do with this message
+        String context = messageDigestVector.get(0).toString();
+
+        // check target group
+        SpreadGroup groups[] = spreadMessage.getGroups();
+
+        for (SpreadGroup g : groups) {
+            if(g.toString().equals(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString())) {
+                switch (context) {
+                    case "HELLO_INIT" :
+                        String ip = (String) messageDigestVector.get(1);
+                        String privateName = (String) messageDigestVector.get(2);
+                        this.remoteRMIRegistry.addSpreadBoundHost(privateName, ip);
+                        break;
+                    case "HELLO_RESPONSE" :
+                        System.out.println("Nothing to do for HELLO_RESPONSE");
+                        break;
+                    default:
+                        System.out.println("Don't know what to do with message context: \"" + context + "\"");
+                        break;
+                }
+            } else if (g.toString().equals(SpreadWrapper.GroupEnum.SERVER_GROUP.toString())) {
+                System.out.println("Shouldn't be in here ...");
+            } else if (g.toString().equals(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString())) {
+                replicateObject(context, messageDigestVector);
+            }
+        }
+    }
+
+    private void obsoleteRegularMessageReceived(SpreadMessage spreadMessage) {
         System.out.print("Received a ");
         if(spreadMessage.isUnreliable())
             System.out.print("UNRELIABLE");
@@ -52,30 +102,6 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         byte data[] = spreadMessage.getData();
         System.out.println("The data is " + data.length + " bytes.");
         System.out.println("The message is: " + new String(data));
-
-
-        /*
-         * ##### Digest received message #####
-         * Protocol ensures, that first digest is context
-         * Context is a string that provides replication context used to replicate object
-         * Digest after the first is either the object to be replicated
-         * or an ArrayList of objects to be replicated
-         */
-        Vector messageDigestVector = null;
-        try {
-            messageDigestVector = spreadMessage.getDigest();
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        }
-
-        if(messageDigestVector == null)
-            return;
-
-        // context - what to do with this message
-        String context = messageDigestVector.get(0).toString();
-
-        // replicate Object
-        replicateObject(context, messageDigestVector);
     }
 
     /**
@@ -90,6 +116,27 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
      */
     @Override
     public void membershipMessageReceived(SpreadMessage spreadMessage) {
+        MembershipInfo membershipInfo = spreadMessage.getMembershipInfo();
+        SpreadGroup group = membershipInfo.getGroup();
+
+        if(!group.toString().equals(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString())) {
+            // only FT messages are interesting
+            return;
+        }
+
+        if(membershipInfo.isCausedByDisconnect()
+                || membershipInfo.isCausedByLeave()
+                || membershipInfo.isCausedByNetwork()) {
+            String sender = spreadMessage.getSender().toString();
+
+            HashMap<String, String> hosts = this.remoteRMIRegistry.getSpreadBoundHosts();
+            hosts.remove(sender);
+            this.remoteRMIRegistry.setSpreadBoundHosts(hosts);
+            this.remoteRMIRegistry.replicateSpreadBoundHosts();
+        }
+    }
+
+    public void obsoleteMembershipMessageReceived(SpreadMessage spreadMessage) {
         MembershipInfo membershipInfo = spreadMessage.getMembershipInfo();
         SpreadGroup group = membershipInfo.getGroup();
 
@@ -137,7 +184,6 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         }
     }
 
-
     /**
      * Replicate an object depending on context
      * @param context       the context which defines how to replicate
@@ -150,11 +196,22 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         switch (context) {
             case "UPDATE_RMIREGISTRY":     // expected digest is Serializable (b/c no dep to RegistryServer!)
                 System.out.println("in replicateObject -> UPDATE_RMIREGISTRY");
-                // TODO: Check BoundHost public access
+
                 HashMultimap<String, BoundHost> objectServers =
                         (HashMultimap<String, BoundHost>)messageDigest.get(1);
 
                 this.remoteRMIRegistry.setObjectServers(objectServers);
+
+                System.out.println("in replicateObject -> AFTER replication");
+                retValue = true;
+                break;
+            case "UPDATE_RMI_SPREADBOUND_HOSTS":
+                System.out.println("in replicateObject -> UPDATE_RMI_SPREADBOUND_HOSTS");
+
+                HashMap<String, String> spreadBoundHosts =
+                        (HashMap<String, String>)messageDigest.get(1);
+
+                this.remoteRMIRegistry.setSpreadBoundHosts(spreadBoundHosts);
 
                 System.out.println("in replicateObject -> AFTER replication");
                 retValue = true;

@@ -12,13 +12,16 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
      * GameSerivceImpl object to be called for replication of objects
      */
     private GameServiceImpl gameService;
+    private String privateName;
+    private boolean initDone = false;
 
     /**
      * Ctor
      * @param gameService   The GameServiceImpl object on which replication is done
      */
-    public ReplicateGameMessageListener(GameServiceImpl gameService) {
+    public ReplicateGameMessageListener(GameServiceImpl gameService, String privateName ) {
         this.gameService = gameService;
+        this.privateName = privateName;
     }
 
     /**
@@ -29,6 +32,58 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
      */
     @Override
     public void regularMessageReceived(SpreadMessage spreadMessage) {
+        /*
+         * ##### Digest received message #####
+         * Protocol ensures, that first digest is context
+         * Context is a string that provides replication context used to replicate object
+         * Digest after the first is either the object to be replicated
+         * or an ArrayList of objects to be replicated
+         */
+        Vector messageDigestVector = null;
+        try {
+            messageDigestVector = spreadMessage.getDigest();
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+
+        if(messageDigestVector == null)
+            return;
+
+        // context - what to do with this message
+        String context = messageDigestVector.get(0).toString();
+
+        // check target group
+        SpreadGroup groups[] = spreadMessage.getGroups();
+
+        for (SpreadGroup g : groups) {
+            if(g.toString().equals(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString())) {
+                switch (context) {
+                    case "HELLO_INIT" :
+                        System.out.println("Nothing to do for HELLO_INIT");
+                        break;
+                    case "HELLO_RESPONSE" :
+                        String recipient = (String) messageDigestVector.get(1);
+                        System.out.println("HelloResponse for: \"" + recipient + "\"");
+                        // message for me?
+                        if(recipient.equals(privateName) && !initDone) {
+                            HashMap<UUID, GameLocal> gameLocalList = (HashMap<UUID,GameLocal>) messageDigestVector.get(2);
+                            gameService.setGameLocalList(gameLocalList);
+                            initDone = true;
+                        }
+                        break;
+                    default:
+                        System.out.println("Don't know what to do with message context: \"" + context + "\"");
+                        break;
+                }
+            } else if (g.toString().equals(SpreadWrapper.GroupEnum.SERVER_GROUP.toString())) {
+                replicateObject(context, messageDigestVector);
+            } else if (g.toString().equals(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString())) {
+                System.out.println("shouldn't be in here ...");
+            }
+        }
+    }
+
+    private void obsoleteRegularMessageReceived(SpreadMessage spreadMessage) {
         System.out.print("Received a ");
         if(spreadMessage.isUnreliable())
             System.out.print("UNRELIABLE");
@@ -58,28 +113,6 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
         byte data[] = spreadMessage.getData();
         System.out.println("The data is " + data.length + " bytes.");
         System.out.println("The message is: " + new String(data));
-
-
-        /*
-         * ##### Digest received message #####
-         * Protocol ensures, that first digest is context
-         * Context is a string that provides replication context used to replicate object
-         * Digest after the first is either the object to be replicated
-         * or an ArrayList of objects to be replicated
-         */
-        Vector messageDigestVector = null;
-        try {
-            messageDigestVector = spreadMessage.getDigest();
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        }
-
-        if(messageDigestVector == null)
-            return;
-
-        String context = messageDigestVector.get(0).toString();
-
-        replicateObject(context, messageDigestVector);
     }
 
     /**
@@ -94,6 +127,10 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
      */
     @Override
     public void membershipMessageReceived(SpreadMessage spreadMessage) {
+
+    }
+
+    public void obsoleteMembershipMessageReceived(SpreadMessage spreadMessage) {
         MembershipInfo membershipInfo = spreadMessage.getMembershipInfo();
         SpreadGroup group = membershipInfo.getGroup();
 
