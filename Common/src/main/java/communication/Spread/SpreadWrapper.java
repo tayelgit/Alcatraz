@@ -241,10 +241,13 @@ public class SpreadWrapper {
     public void addTestReplicateObjectMessageListener() { this.connection.add(new TestReplicateObjectMessageListener()); }
 
     /**
-     *
+     * Should only be used by GameServer
      * @param localIP
      */
     public void sendHello(String localIP, String privateName) throws SpreadException {
+        // to ensure that only GameServer uses this
+        if(privateName.startsWith("rmi")) return;
+
         SpreadMessage message = new SpreadMessage();
 
         message.setReliable();
@@ -260,19 +263,19 @@ public class SpreadWrapper {
 
     /**
      *
-     * @param receipient
+     * @param recipient
      * @throws SpreadException
      */
-    public void sendHelloResponse(String receipient) throws SpreadException {
+    public void sendHelloResponse(String recipient) throws SpreadException {
         SpreadMessage message = new SpreadMessage();
 
         message.setReliable();
 
         message.digest("HELLO_RESPONSE");
-        message.digest(receipient);
+        message.digest(recipient);
         message.digest(this.gameService.getGameLocalList());
 
-        message.addGroup(GroupEnum.SERVER_GROUP.toString());
+        message.addGroup(GroupEnum.FAULTTOLERANCE_GROUP.toString());
 
         connection.multicast(message);
     }
