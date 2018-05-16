@@ -76,13 +76,14 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
         System.out.println(this.maxPosition);
         System.out.println(this.myPosition);
         this.alcatraz.init(this.maxPosition,this.myPosition);
-        if(myPosition != 0){
+
+        this.alcatraz.showWindow();
+        this.alcatraz.start();
+        //this.observer.close();
+       if(myPosition != 0){
             GameRemote game = (GameRemote) Naming.lookup(this.gameState.getCurrentGamer().getEndpoint()+"/gameClient");
             timer.schedule(this.ping = new Ping(game,this), 0, 5000);
         }
-        this.alcatraz.showWindow();
-        this.alcatraz.start();
-        this.observer.close();
     }
 
 
@@ -144,6 +145,7 @@ public class GameImpl extends UnicastRemoteObject implements GameRemote , Observ
 
             try {
                 GameRemote game = (GameRemote) Naming.lookup(this.gameState.getCurrentGamer().getEndpoint()+"/gameClient");
+                timer= new Timer();
                 timer.schedule(this.ping = new Ping(game,this), 0, 5000);
 
                 } catch (NotBoundException | MalformedURLException | RemoteException e) {
