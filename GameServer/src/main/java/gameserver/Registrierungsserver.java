@@ -102,7 +102,7 @@ public class Registrierungsserver implements GameStateObserver {
     }
 
     /**
-     *
+     * From GameStateObserver
      * @param gameLocalList
      */
     @Override
@@ -113,8 +113,21 @@ public class Registrierungsserver implements GameStateObserver {
         try {
             message = factory.createMessage("UPDATE_GAMELOCALLIST", (HashMap<UUID, GameLocal>)gameLocalList);
             message.addGroup(SpreadWrapper.GroupEnum.SERVER_GROUP.toString());
-            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
             this.spread.sendMessage(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * From GameStateObserver
+     * @param sender
+     * @param gameLocalList
+     */
+    @Override
+    public void answerGameServerHello(String sender, Map<UUID, GameLocal> gameLocalList) {
+        try {
+            this.spread.sendHelloResponse(sender);
         } catch (SpreadException e) {
             e.printStackTrace();
         }

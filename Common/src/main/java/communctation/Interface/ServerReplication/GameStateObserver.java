@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface GameStateObserver {
     void replicateGameState(Map<UUID, GameLocal> gameLocalList);
+    void answerGameServerHello(String sender, Map<UUID, GameLocal> gameLocalList);
 }

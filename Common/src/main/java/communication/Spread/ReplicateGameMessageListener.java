@@ -59,7 +59,10 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
             if(g.toString().equals(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString())) {
                 switch (context) {
                     case "HELLO_INIT" :
-                        System.out.println("Nothing to do for HELLO_INIT");
+                        // Other GameServer joined and says hello - lets send him a response!
+                        String sender = spreadMessage.getSender().toString();
+                        gameService.answerGameServerHello(sender, gameService.getGameLocalList());
+
                         break;
                     case "HELLO_RESPONSE" :
                         String recipient = (String) messageDigestVector.get(1);

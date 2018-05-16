@@ -156,4 +156,8 @@ public class GameServiceImpl extends UnicastRemoteObject implements GameServiceR
     public void setGameStateObserver(GameStateObserver observer) {
         this.observer = observer;
     }
+
+    public void answerGameServerHello(String sender, HashMap<UUID,GameLocal> gameLocalList) {
+        this.observer.answerGameServerHello(sender, gameLocalList);
+    }
 }

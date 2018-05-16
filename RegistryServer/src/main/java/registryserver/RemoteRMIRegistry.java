@@ -277,7 +277,6 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         try {
             message = factory.createMessage("UPDATE_RMIREGISTRY", new MarshalledObject<HashMultimap>(this.objectServers));
             message.addGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString());
-            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
             this.spread.sendMessage(message);
         } catch (SpreadException e) {
             e.printStackTrace();
@@ -304,7 +303,6 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         try {
             message = factory.createMessage("UPDATE_RMI_SPREADBOUND_HOSTS", this.spreadBoundHosts);
             message.addGroup(SpreadWrapper.GroupEnum.REGISTRY_GROUP.toString());
-            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
             this.spread.sendMessage(message);
         } catch (SpreadException e) {
             e.printStackTrace();
