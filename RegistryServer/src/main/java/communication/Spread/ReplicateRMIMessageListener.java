@@ -69,7 +69,8 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
 
                         // sender GameServer or RMI?
                         String senderType = (String) messageDigestVector.get(1);
-                        String sender = spreadMessage.getSender().toString();
+                        //String sender = spreadMessage.getSender().toString();
+                        String sender = (String) messageDigestVector.get(3);
 
                         // remember GameServer in RMI
                         if(senderType.equals("GAME_SERVER")) {
@@ -104,10 +105,13 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
                                 HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();
                                 this.remoteRMIRegistry.setObjectServers(objectServers);
                                 this.initDone = true;
+                                System.out.println("Hello successfully done for " + recipient + "(" + recipientType + ")");
                             } catch (IOException | ClassNotFoundException e) {
                                 e.printStackTrace();
                                 System.out.println("Couldn't deserialize HashMultimap...");
                             }
+                        } else {
+                            System.out.println("Hello NOT successfully done for " + recipient + "(" + recipientType + ")");
                         }
                         break;
                     default:

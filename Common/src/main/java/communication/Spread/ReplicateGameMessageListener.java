@@ -66,7 +66,8 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
                         // 3 - privateName  /  see ReplicateRMIMessageListener
 
                         String senderType = (String)messageDigestVector.get(1);
-                        String sender = spreadMessage.getSender().toString();
+                        //String sender = spreadMessage.getSender().toString();
+                        String sender = (String)messageDigestVector.get(3);
 
                         if(senderType.equals("GAME_SERVER")) {
                             gameService.answerGameServerHello(sender, gameService.getGameLocalList());
@@ -90,6 +91,9 @@ public class ReplicateGameMessageListener implements AdvancedMessageListener {
                             HashMap<UUID, GameLocal> gameLocalList = (HashMap<UUID,GameLocal>) messageDigestVector.get(3);
                             gameService.setGameLocalList(gameLocalList);
                             initDone = true;
+                            System.out.println("Hello successfully done for " + recipient + "(" + recipientType + ")");
+                        }else {
+                            System.out.println("Hello NOT successfully done for " + recipient + "(" + recipientType + ")");
                         }
                         break;
                     default:
