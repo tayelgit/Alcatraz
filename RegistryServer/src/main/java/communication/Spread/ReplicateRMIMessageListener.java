@@ -94,6 +94,7 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
                         String recipient = (String) messageDigestVector.get(1);
                         String recipientType = (String) messageDigestVector.get(2);
                         System.out.println("HelloResponse for: \"" + recipient + "\"");
+                        System.out.println("-> recipient: " + recipient + ", me: " + privateName);
                         // message for me?
                         if(recipient.equals(this.privateName)
                                 && recipientType.equals("RMI_REGISTRY")

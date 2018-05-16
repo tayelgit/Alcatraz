@@ -86,6 +86,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             e.printStackTrace();
         }
         this.spreadBoundHosts = new HashMap<String, String>();
+        sendRMIHello();
     }
 
 
@@ -315,10 +316,25 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             message.setReliable();
 
             message.digest("HELLO_RESPONSE");
-            message.digest("RMI_REGISTRY");
             message.digest(sender);
-
+            message.digest("RMI_REGISTRY");
             message.digest(this.objectServers);
+
+            message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
+
+            this.spread.sendMessage(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendRMIHello() {
+        SpreadMessage message = new SpreadMessage();
+        try {
+            message.setReliable();
+
+            message.digest("HELLO_INIT");
+            message.digest("RMI_REGISTRY");
 
             message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
 
