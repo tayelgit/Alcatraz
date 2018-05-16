@@ -37,9 +37,8 @@ public class Registrierungsserver implements GameStateObserver {
         }
 
         this.rmiRegistryAddresses = new ArrayList<String>();
-        //this.rmiRegistryAddresses.add("127.0.0.1");
-        this.rmiRegistryAddresses.add("192.168.21.107");
-        this.rmiRegistryAddresses.add("192.168.21.110");
+        this.rmiRegistryAddresses.add("192.168.21.10");
+        this.rmiRegistryAddresses.add("192.168.21.11");
 
         bindToRmiRegistry();
 

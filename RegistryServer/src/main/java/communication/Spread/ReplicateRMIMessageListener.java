@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.MarshalledObject;
 import java.sql.SQLOutput;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -178,30 +179,52 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
             return;
         }
 
-        if(membershipInfo.isCausedByDisconnect()
-                || membershipInfo.isCausedByLeave()
-                || membershipInfo.isCausedByNetwork()) {
-            String sender = spreadMessage.getSender().toString();
+        String sender = null;
+        if(membershipInfo.isCausedByDisconnect()) {
+            sender = membershipInfo.getDisconnected().toString();
+        } else if (membershipInfo.isCausedByLeave()) {
+            sender = membershipInfo.getLeft().toString();
+        } else if(membershipInfo.isCausedByNetwork()) {
+            MembershipInfo.VirtualSynchronySet virtual_synchrony_sets[] = membershipInfo.getVirtualSynchronySets();
 
-            HashMap<String, String> hosts = this.remoteRMIRegistry.getSpreadBoundHosts();
-            String value_IP = hosts.get(sender);
+            MembershipInfo.VirtualSynchronySet set = virtual_synchrony_sets[0];
+            SpreadGroup setMembers[] = set.getMembers();
 
-            if (value_IP == null) {
-                System.out.println("SpreadBoundHost " + sender + " already removed");
-                return;
+            HashMap<String, String> temp = this.remoteRMIRegistry.getSpreadBoundHosts();
+
+
+            for (String s : temp.keySet()) {
+                if(!Arrays.asList(setMembers).contains(s)){
+                    sender =  s;
+                    break;
+                }
             }
-
-            try {
-                this.remoteRMIRegistry.removeObjectServer("gamelist", value_IP, 2);
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Error removing " + sender + "(" + value_IP + ")");
-            }
-
-            hosts.remove(sender);
-            this.remoteRMIRegistry.setSpreadBoundHosts(hosts);
-            this.remoteRMIRegistry.replicateSpreadBoundHosts();
         }
+
+        if(sender == null) {
+            System.out.println("Couldn't verify sender");
+            return;
+        }
+
+        HashMap<String, String> hosts = this.remoteRMIRegistry.getSpreadBoundHosts();
+        String value_IP = hosts.get(sender);
+
+        if (value_IP == null) {
+            System.out.println("SpreadBoundHost " + sender + " already removed");
+            return;
+        }
+
+        try {
+            this.remoteRMIRegistry.removeObjectServer("gamelist", value_IP, 2);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Error removing " + sender + "(" + value_IP + ")");
+        }
+
+        hosts.remove(sender);
+        this.remoteRMIRegistry.setSpreadBoundHosts(hosts);
+        this.remoteRMIRegistry.replicateSpreadBoundHosts();
+
     }
 
     public void obsoleteMembershipMessageReceived(SpreadMessage spreadMessage) {
