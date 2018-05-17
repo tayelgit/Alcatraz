@@ -311,6 +311,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
     }
 
     public void answerRMIHello(String sender) {
+        if (this.spread.getPrivateName().equals(sender)) return;
         SpreadMessage message = new SpreadMessage();
         try {
             message.setReliable();

@@ -101,17 +101,15 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
                                 && recipientType.equals("RMI_REGISTRY")
                                 && !this.initDone) {
 
-                            if(spreadMessage.getMembershipInfo().getMembers().length != 1) {
-                                try {
-                                    MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject) messageDigestVector.get(3);
-                                    HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();
-                                    this.remoteRMIRegistry.setObjectServers(objectServers);
-                                    this.initDone = true;
-                                    System.out.println("Hello successfully done for " + recipient + "(" + recipientType + ")");
-                                } catch (IOException | ClassNotFoundException e) {
-                                    e.printStackTrace();
-                                    System.out.println("Couldn't deserialize HashMultimap...");
-                                }
+                            try {
+                                MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject) messageDigestVector.get(3);
+                                HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();
+                                this.remoteRMIRegistry.setObjectServers(objectServers);
+                                this.initDone = true;
+                                System.out.println("Hello successfully done for " + recipient + "(" + recipientType + ")");
+                            } catch (IOException | ClassNotFoundException e) {
+                                e.printStackTrace();
+                                System.out.println("Couldn't deserialize HashMultimap...");
                             }
                         } else {
                             System.out.println("Hello NOT successfully done for " + recipient + "(" + recipientType + ")");
