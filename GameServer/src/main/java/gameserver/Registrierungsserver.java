@@ -23,7 +23,6 @@ public class Registrierungsserver implements GameStateObserver {
     private Registry registry;
     private GameServiceImpl game;
     private SpreadWrapper spread;
-    static int spreadNameIncrementer = 0;
 
     public Registrierungsserver()
             throws RemoteException, NotBoundException, InterruptedException, SpreadException {
@@ -31,14 +30,14 @@ public class Registrierungsserver implements GameStateObserver {
             this.game = new GameServiceImpl();
             this.game.setGameStateObserver(this);
 
-            joinSpread("regs" + spreadNameIncrementer++, "localhost");
+            joinSpread("regs" + (int)(Math.random() * 1483 + 850), "localhost");
         } catch (RemoteException | SpreadException | UnknownHostException e) {
             e.printStackTrace();
         }
 
         this.rmiRegistryAddresses = new ArrayList<String>();
-        this.rmiRegistryAddresses.add("192.168.21.10");
-        this.rmiRegistryAddresses.add("192.168.21.11");
+        this.rmiRegistryAddresses.add("192.168.21.110");
+        this.rmiRegistryAddresses.add("192.168.21.107");
 
         bindToRmiRegistry();
 

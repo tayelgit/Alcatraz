@@ -219,6 +219,7 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
 
         HashMap<String, String> hosts = this.remoteRMIRegistry.getSpreadBoundHosts();
         String value_IP = hosts.get(sender);
+        System.out.println("IP to remove: " + value_IP);
 
         if (value_IP == null) {
             System.out.println("SpreadBoundHost " + sender + " already removed");
