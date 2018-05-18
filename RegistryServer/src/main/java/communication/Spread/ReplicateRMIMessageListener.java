@@ -81,7 +81,11 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
 
                         // If Hello from RMI_REGISTRY
                         if(senderType.equals("RMI_REGISTRY")) {
-                            this.remoteRMIRegistry.answerRMIHello(sender);
+                            try {
+                                this.remoteRMIRegistry.answerRMIHello(sender);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
 
                         break;
@@ -105,6 +109,7 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
                                 MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject) messageDigestVector.get(3);
                                 HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();
                                 this.remoteRMIRegistry.setObjectServers(objectServers);
+                                this.remoteRMIRegistry.persistBoundHosts();
                                 this.initDone = true;
                                 System.out.println("Hello successfully done for " + recipient + "(" + recipientType + ")");
                             } catch (IOException | ClassNotFoundException e) {
@@ -293,9 +298,6 @@ public class ReplicateRMIMessageListener implements AdvancedMessageListener {
         switch (context) {
             case "UPDATE_RMIREGISTRY":     // expected digest is Serializable (b/c no dep to RegistryServer!)
                 System.out.println("in replicateObject -> UPDATE_RMIREGISTRY");
-
-                //HashMultimap<String, BoundHost> objectServers =
-                        //(HashMultimap<String, BoundHost>)messageDigest.get(1);
 
                 MarshalledObject<HashMultimap<String, BoundHost>> inputObject = (MarshalledObject)messageDigest.get(1);
                 HashMultimap<String, BoundHost> objectServers = (HashMultimap) inputObject.get();

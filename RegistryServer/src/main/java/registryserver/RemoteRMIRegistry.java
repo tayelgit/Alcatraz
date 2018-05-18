@@ -41,7 +41,6 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         REBIND, UNBIND
     }
     private SpreadWrapper spread;
-    static int spreadNameIncrementer = 0;
     private static HashMap<String, String> spreadBoundHosts;
 
 
@@ -81,7 +80,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
 
         // 2. Spread joinen - ggf wird objectServers ueberschrieben
         try {
-            joinSpread("rmi" + spreadNameIncrementer++, "localhost");
+            joinSpread("rmi" + (int)(Math.random() * 1483 + 850), "localhost");
         } catch (SpreadException e) {
             e.printStackTrace();
         }
@@ -214,10 +213,11 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
      */
     public synchronized void setObjectServers(HashMultimap<String, BoundHost> objectServers) {
         this.objectServers = objectServers;
+        persistBoundHosts();
     }
 
     @SuppressWarnings("unchecked")
-    private void persistBoundHosts() {
+    public void persistBoundHosts() {
         try {
             ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(bindingFile));
             output.writeObject(new MarshalledObject(objectServers));
@@ -310,7 +310,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
         }
     }
 
-    public void answerRMIHello(String sender) {
+    public void answerRMIHello(String sender) throws IOException {
         if (this.spread.getPrivateName().equals(sender)) return;
         SpreadMessage message = new SpreadMessage();
         try {
@@ -319,7 +319,7 @@ public class RemoteRMIRegistry extends UnicastRemoteObject implements Registry {
             message.digest("HELLO_RESPONSE");
             message.digest(sender);
             message.digest("RMI_REGISTRY");
-            message.digest(this.objectServers);
+            message.digest(new MarshalledObject<HashMultimap>(this.objectServers));
 
             message.addGroup(SpreadWrapper.GroupEnum.FAULTTOLERANCE_GROUP.toString());
 
